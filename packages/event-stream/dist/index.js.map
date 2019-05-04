@@ -1,0 +1,1 @@
+{"version":3,"sources":["../src/index.js"],"names":["module","exports","EventStream"],"mappings":";;AAAA;;;;;;AAEAA,OAAOC,OAAP,GAAkB;AAChBC;AADgB,CAAlB","file":"index.js","sourcesContent":["import {default as EventStream} from './EventStream';\n\nmodule.exports =  {\n  EventStream\n}\n"]}

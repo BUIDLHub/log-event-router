@@ -1,0 +1,20 @@
+// Override Boostrap variables
+@import "node_modules/bootstrap/scss/bootstrap";
+
+
+$theme-colors: (
+  "bg-charcoal": #414141,
+  "bg-muted": rgba(100,100,100,.1),
+  "bg-subtle": rgba(200,200,200,.2),
+  "nav-bg": rgba(255, 255, 255, 1),
+  "main-bg": #F2F2F2,
+  "nav-item-text": rgba(255,255,255,.8),
+  "highlight-button-bg": $warning,
+  "input-placeholder": rgba(180, 180, 180, .8),
+  "highlight-gradient-start": #58c366,
+  "highlight-gradient-end": $success,
+  "text-dark": black,
+  "bg-light": white,
+  "clickable-icon-hover-text": black,
+  "clickable-icon-hover-bg": $warning
+)
