@@ -43,6 +43,7 @@ const start = () => async (dispatch,getState) => {
   let stream = getState().stream.streams;
   let web3 = getState().chain.web3;
   let latest = await web3.eth.getBlockNumber();
+  //TODO: get offset by reading highest block we've seen in prior run.
   await stream.start({fromBlock: latest-50});
 }
 
