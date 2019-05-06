@@ -91,7 +91,7 @@ export default class EventPuller {
         }
         await this.normalizer.normalize(evt,ctx.history);
       }
-      
+
       if(_.values(ctx.history).length > 0) {
         //new block, convert what we've built up to transaction set
         currentBlock.transactions = _.values(ctx.history);
@@ -116,7 +116,7 @@ export default class EventPuller {
         ctx.done();
       }
     } catch (e) {
-      if(e.message.contains("more than 1000 results")) {
+      if(e.message.includes("more than 1000 results")) {
         if(span <= 1) {
           //we've already reduced it as much as we can reduce
           //the span so have to bail out.
