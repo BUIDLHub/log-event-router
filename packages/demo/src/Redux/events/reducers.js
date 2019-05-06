@@ -26,7 +26,9 @@ const success = (state=INIT, action) => {
 const update = (state=INIT, action) => {
   return {
     ...state,
-    byType: action.events
+    byType: {
+      ...action.events
+    }
   }
 }
 

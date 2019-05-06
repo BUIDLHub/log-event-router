@@ -1,7 +1,6 @@
 
-export const reduxMiddleware = (dispatch, getState) => (ctx, next) => {
+export const reduxMiddleware = (dispatch, getState) => ctx => {
   ctx.dispatch = dispatch;
   ctx.getState = getState;
-  next();
 };
 //# sourceMappingURL=index.js.map

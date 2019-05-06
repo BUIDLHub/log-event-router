@@ -30,83 +30,37 @@ export default class Router {
     let txns = block.transactions;
     for(let i=0;i<txns.length;++i) {
       let t = txns[i];
-      let enrichedCtx = {
-        ...ctx
+      ctx = {
+        ...ctx,
+        txn: t
       };
       try {
-        let sub = new SubContext({
-          baseContext: enrichedCtx,
-          txn: t,
-          handlers: this.globalHandlers
-        });
-        enrichedCtx = sub.ctx;
-        await sub.next();
+        for(let i=0;i<this.globalHandlers.length;++i) {
+          let h = this.globalHandlers[i];
+          if(typeof h === 'function') {
+            await h(ctx);
+          } else if(typeof h.process === 'function') {
+            await h.process(ctx);
+          }
+        }
+
         let tgt = this.contextHandlers[t.fnContext];
         if(tgt) {
-          let sub = new SubContext({
-            baseContext: enrichedCtx,
-            txn: t,
-            handlers: tgt
-          });
-          await sub.next();
+          for(let i=0;i<tgt.length;++i) {
+            let h = tgt[i];
+            if(typeof h === 'function') {
+              await h(ctx);
+            } else if(typeof h.process === 'function') {
+              await h.process(ctx);
+            }
+          }
         }
+
       } catch (e) {
         if(this.errorHandler) {
           this.errorHandler(e);
         }
       }
     }
-  }
-}
-
-class SubContext {
-  constructor(props) {
-    this.ctx = {
-      ...props.baseContext,
-      txn: props.txn
-    };
-    this.handlers = props.handlers;
-    this.index = 0;
-    [
-      'next'
-    ].forEach(fn=>this[fn]=this[fn].bind(this));
-  }
-
-  next() {
-    return new Promise(async (done,err)=>{
-      let nxt = async () => {
-        let h = this.handlers[this.index];
-        ++this.index;
-        if(h) {
-          try {
-            if(typeof h === 'function') {
-              await h(this.ctx, nxt);
-            } else if(typeof h.process === 'function'){
-              await h.process(this.ctx, nxt);
-            }
-          } catch (e) {
-            err(e);
-          }
-        } else {
-          done();
-        }
-      }
-      let h = this.handlers[0];
-      ++this.index;
-      if(h) {
-        try {
-          if(typeof h === 'function') {
-            await h(this.ctx, nxt);
-          } else if(typeof h.process === 'function') {
-            await h.process(this.ctx, nxt);
-          }
-        } catch (e) {
-          err(e);
-        }
-      } else {
-        done();
-      }
-    });
-
   }
 }

@@ -15,15 +15,14 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 
 var storageMiddleware = exports.storageMiddleware = function storageMiddleware() {
   return function () {
-    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(ctx, next) {
+    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(ctx) {
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
               ctx.storage = _LocalForage2.default.instance;
-              next();
 
-            case 2:
+            case 1:
             case 'end':
               return _context.stop();
           }
@@ -31,7 +30,7 @@ var storageMiddleware = exports.storageMiddleware = function storageMiddleware()
       }, _callee, undefined);
     }));
 
-    return function (_x, _x2) {
+    return function (_x) {
       return _ref.apply(this, arguments);
     };
   }();

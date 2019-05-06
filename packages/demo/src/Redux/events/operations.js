@@ -2,6 +2,7 @@ import {Creators} from './actions';
 import _ from 'lodash';
 
 const addType = (byType,event) => {
+  console.log("Adding event", event.event);
   let a = byType[event.event] || [];
   a.push(event);
   byType[event.event] = a;
@@ -33,7 +34,7 @@ const init = () => async (dispatch,getState) => {
   let stream = getState().stream.streams;
 
   //runs on all txns
-  stream.use(async (ctx, next)=>{
+  stream.use(async (ctx)=>{
     let state = getState();
     let byType = {
       ...state.events.byType
@@ -41,26 +42,28 @@ const init = () => async (dispatch,getState) => {
     let events = _.values(ctx.txn.logEvents);
     for(let i=0;i<events.length;++i) {
       let evt = events[i];
-      addType(byType, evt);
+      let a = byType[evt.event] || [];
+      a = [
+        ...a,
+        evt
+      ];
+      byType[evt.event] = a;
     }
-    dispatch(Creators.update(byType));
-    next();
+    dispatch(Creators.update({...byType}));
   });
 
   //txns where contract's breedWithAuto fn was called
-  stream.use("breedWithAuto", async (ctx,next)=>{
+  stream.use("breedWithAuto", async (ctx)=>{
     console.log("Breeding txn", ctx.txn);
     let events = _.values(ctx.txn.logEvents);
     await storeEvents(events, ctx.storage);
-    next();
   });
 
   //txns where contract's giveBirth fn was called
-  stream.use("giveBirth", async (ctx,next)=>{
+  stream.use("giveBirth", async (ctx)=>{
     console.log("Birth txn", ctx.txn);
     let events = _.values(ctx.txn.logEvents);
     await storeEvents(events, ctx.storage);
-    next();
   });
 }
 

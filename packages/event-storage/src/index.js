@@ -1,8 +1,7 @@
 import LocalForage from './LocalForage';
 
-export const storageMiddleware = () => async (ctx, next) => {
+export const storageMiddleware = () => async (ctx) => {
   ctx.storage = LocalForage.instance;
-  next();
 }
 
 export const storageInstance = () => LocalForage.instance;
