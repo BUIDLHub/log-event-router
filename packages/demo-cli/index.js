@@ -8,7 +8,7 @@ const {
 
 
 const NETWORK = 'mainnet';
-const RPC_ENDPOINT = `https://${NETWORK}.infura.io`
+const RPC_ENDPOINT = `wss://${NETWORK}.infura.io/ws`
 const BASE_ABI_URL = "https://api.etherscan.io/api?module=contract&action=getabi&address=";
 const CONTRACT = "0x06012c8cf97bead5deae237070f9587f8e7a266d";
 
@@ -49,10 +49,9 @@ const main = async () => {
     web3
   });
 
-  const eventLogger = async (ctx, next) => {
+  const eventLogger = async (ctx) => {
     console.log('received events...');
-    console.log(ctx);
-    next();
+    console.log(JSON.stringify(ctx, null, 2));
   }
 
   stream.use(eventLogger);

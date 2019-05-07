@@ -131,7 +131,7 @@ var EventPuller = function () {
 
               case 13:
                 if (!(i < events.length)) {
-                  _context2.next = 34;
+                  _context2.next = 40;
                   break;
                 }
 
@@ -171,17 +171,28 @@ var EventPuller = function () {
                 block = evt.blockNumber;
 
               case 29:
-                _context2.next = 31;
+                _context2.prev = 29;
+                _context2.next = 32;
                 return this.normalizer.normalize(evt, ctx.history);
 
-              case 31:
+              case 32:
+                _context2.next = 37;
+                break;
+
+              case 34:
+                _context2.prev = 34;
+                _context2.t1 = _context2['catch'](29);
+
+                console.log("Problem normalizing", _context2.t1);
+
+              case 37:
                 ++i;
                 _context2.next = 13;
                 break;
 
-              case 34:
+              case 40:
                 if (!(_lodash2.default.values(ctx.history).length > 0)) {
-                  _context2.next = 45;
+                  _context2.next = 51;
                   break;
                 }
 
@@ -191,23 +202,23 @@ var EventPuller = function () {
                 currentBlock.transactions.sort(function (a, b) {
                   return a.transactionIndex - b.transactionIndex;
                 });
-                _context2.prev = 37;
-                _context2.next = 40;
+                _context2.prev = 43;
+                _context2.next = 46;
                 return cb(null, currentBlock);
 
-              case 40:
-                _context2.next = 45;
+              case 46:
+                _context2.next = 51;
                 break;
 
-              case 42:
-                _context2.prev = 42;
-                _context2.t1 = _context2['catch'](37);
+              case 48:
+                _context2.prev = 48;
+                _context2.t2 = _context2['catch'](43);
 
-                console.log("Problem sending event block to callback", _context2.t1);
+                console.log("Problem sending event block to callback", _context2.t2);
 
-              case 45:
+              case 51:
                 if (!(ctx.finalEnd !== ctx.end)) {
-                  _context2.next = 49;
+                  _context2.next = 55;
                   break;
                 }
 
@@ -215,41 +226,41 @@ var EventPuller = function () {
                   end: Math.ceil(ctx.increment) + ctx.start
                 }), cb));
 
-              case 49:
+              case 55:
                 ctx.done();
 
-              case 50:
-                _context2.next = 58;
+              case 56:
+                _context2.next = 64;
                 break;
 
-              case 52:
-                _context2.prev = 52;
-                _context2.t2 = _context2['catch'](2);
+              case 58:
+                _context2.prev = 58;
+                _context2.t3 = _context2['catch'](2);
 
-                if (!_context2.t2.message.contains("more than 1000 results")) {
-                  _context2.next = 58;
+                if (!_context2.t3.message.includes("more than 1000 results")) {
+                  _context2.next = 64;
                   break;
                 }
 
                 if (!(span <= 1)) {
-                  _context2.next = 57;
+                  _context2.next = 63;
                   break;
                 }
 
-                throw _context2.t2;
+                throw _context2.t3;
 
-              case 57:
+              case 63:
                 return _context2.abrupt('return', this._doStart(_extends({}, ctx, {
                   increment: span,
                   end: Math.ceil(span / 2) + ctx.start
                 }), cb));
 
-              case 58:
+              case 64:
               case 'end':
                 return _context2.stop();
             }
           }
-        }, _callee2, this, [[2, 52], [18, 23], [37, 42]]);
+        }, _callee2, this, [[2, 58], [18, 23], [29, 34], [43, 48]]);
       }));
 
       function _doPull(_x3, _x4) {

@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -8,9 +8,15 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _yup = require("yup");
+var _yup = require('yup');
 
 var yup = _interopRequireWildcard(_yup);
+
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -50,7 +56,7 @@ var EventNormalizer = function () {
   }
 
   _createClass(EventNormalizer, [{
-    key: "normalize",
+    key: 'normalize',
     value: function () {
       var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(event, history) {
         var retVals, txn, start, sig, def, le, ex, a;
@@ -61,7 +67,7 @@ var EventNormalizer = function () {
                 retVals = event.returnValues;
                 //convert big numbers to strings to simplify working with event fields
 
-                _.keys(retVals).forEach(function (k) {
+                _lodash2.default.keys(retVals).forEach(function (k) {
                   var d = retVals[k];
                   if (d._ethersType === 'BigNumber') {
                     retVals[k] = d.toString();
@@ -124,7 +130,7 @@ var EventNormalizer = function () {
                 }
 
               case 11:
-              case "end":
+              case 'end':
                 return _context.stop();
             }
           }

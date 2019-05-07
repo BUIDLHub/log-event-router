@@ -1,4 +1,5 @@
 import * as yup from 'yup';
+import _ from 'lodash';
 
 const schema = yup.object().shape({
   web3: yup.object().required("Event normalizer requires a web3 instance"),
@@ -39,6 +40,7 @@ export default class EventNormalizer {
     });
 
     let txn = history[event.transactionHash.toLowerCase()];
+
     if(!txn) {
       let start = Date.now();
       txn = await this.web3.eth.getTransaction(event.transactionHash);

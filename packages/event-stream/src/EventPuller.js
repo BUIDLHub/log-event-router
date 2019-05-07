@@ -69,7 +69,7 @@ export default class EventPuller {
 
       for(let i=0;i<events.length;++i) {
         let evt = events[i];
-
+        
         if(evt.blockNumber !== block) {
           //new block, convert what we've built up to transaction set
           currentBlock.transactions = _.values(ctx.history);
@@ -89,7 +89,12 @@ export default class EventPuller {
           ctx.history = {};
           block = evt.blockNumber;
         }
-        await this.normalizer.normalize(evt,ctx.history);
+        try {
+          await this.normalizer.normalize(evt,ctx.history);
+        } catch (e) {
+          console.log("Problem normalizing", e);
+        }
+
       }
 
       if(_.values(ctx.history).length > 0) {
