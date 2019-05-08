@@ -124,7 +124,7 @@ var EventPuller = function () {
                 //block changes
                 block = events.length > 0 ? events[0].blockNumber : 0;
                 currentBlock = {
-                  blockNumber: block,
+                  number: block,
                   transactions: []
                 };
                 i = 0;
@@ -164,7 +164,7 @@ var EventPuller = function () {
 
               case 26:
                 currentBlock = {
-                  blockNumber: evt.blockNumber,
+                  number: evt.blockNumber,
                   transactions: []
                 };
                 ctx.history = {};
@@ -230,7 +230,7 @@ var EventPuller = function () {
                 ctx.done();
 
               case 56:
-                _context2.next = 64;
+                _context2.next = 67;
                 break;
 
               case 58:
@@ -238,7 +238,7 @@ var EventPuller = function () {
                 _context2.t3 = _context2['catch'](2);
 
                 if (!_context2.t3.message.includes("more than 1000 results")) {
-                  _context2.next = 64;
+                  _context2.next = 66;
                   break;
                 }
 
@@ -255,7 +255,10 @@ var EventPuller = function () {
                   end: Math.ceil(span / 2) + ctx.start
                 }), cb));
 
-              case 64:
+              case 66:
+                ctx.err(_context2.t3);
+
+              case 67:
               case 'end':
                 return _context2.stop();
             }

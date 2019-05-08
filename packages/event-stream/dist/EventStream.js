@@ -53,24 +53,36 @@ var EventStream = function (_EventEmitter) {
 
     schema.validateSync(props);
 
+    //contract address to subscribe to
     _this.address = props.address;
+
+    //web3 impl
     _this.web3 = props.web3;
+
+    //event subscription options (filters mainly)
     _this.options = props.options;
+
+    //specific event to listen for
     _this.eventName = props.eventName;
 
+    //abi for decoding the events
     var abi = props.abi;
     if (!Array.isArray(abi)) {
       throw new Error("ABI is expected to be an array of field/event defs");
     }
+
     //creating a contract has a side-effect of adding abi signature to every
     //function/event definition. We need these later to extract the function
     //context of event bundles.
     _this.contract = new _this.web3.eth.Contract(abi, _this.address, { address: _this.address });
 
+    //used to pull in transactions that bundle up all events emitted together
     _this.normalizer = new _EventNormalizer2.default({
       abi: abi,
       web3: _this.web3
     });
+
+    //utility to pull and decode the events
     _this.eventPuller = new _EventPuller2.default({
       abi: abi,
       options: _this.options,
@@ -79,6 +91,8 @@ var EventStream = function (_EventEmitter) {
       web3: _this.web3,
       normalizer: _this.normalizer
     });
+
+    //utility to distribute txns with bundled events
     _this.router = new _Router2.default({ errorHandler: function errorHandler(e) {
         return _this.emit("error", e);
       } });
@@ -96,13 +110,20 @@ var EventStream = function (_EventEmitter) {
 
       (_router = this.router).use.apply(_router, arguments);
     }
+
+    /**
+     * Start the stream and start scanning from the fromBlock-toBlock range.
+     * Be sure to install all router handlers  before starting the stream
+     */
+
   }, {
     key: 'start',
     value: function () {
       var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(_ref2) {
         var _this2 = this;
 
-        var fromBlock = _ref2.fromBlock;
+        var fromBlock = _ref2.fromBlock,
+            toBlock = _ref2.toBlock;
         var cb, latest, start, span, lastBlock;
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) {
@@ -112,7 +133,7 @@ var EventStream = function (_EventEmitter) {
                   fromBlock = 0;
                 }
 
-                console.log("Scanning from block", fromBlock);
+                //callback for event puller.
 
                 cb = function () {
                   var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(e, block) {
@@ -123,6 +144,7 @@ var EventStream = function (_EventEmitter) {
                             _context.prev = 0;
 
                             console.log("Received block", block);
+                            //route the block to the router for handling
                             _context.next = 4;
                             return _this2.router.process({}, block);
 
@@ -153,45 +175,66 @@ var EventStream = function (_EventEmitter) {
                 //first need to recover missed events since last run
 
 
-                _context4.next = 5;
-                return this.web3.eth.getBlockNumber();
+                latest = toBlock;
 
-              case 5:
-                latest = _context4.sent;
-                start = fromBlock;
-                span = latest - start;
-
-              case 8:
-                if (!(span > 0)) {
-                  _context4.next = 18;
+                if (latest) {
+                  _context4.next = 7;
                   break;
                 }
 
-                _context4.next = 11;
+                _context4.next = 6;
+                return this.web3.eth.getBlockNumber();
+
+              case 6:
+                latest = _context4.sent;
+
+              case 7:
+                if (!(latest < fromBlock)) {
+                  _context4.next = 9;
+                  break;
+                }
+
+                throw new Error("Start block must come before end block: " + fromBlock + " > " + latest);
+
+              case 9:
+                start = fromBlock;
+                span = latest - start;
+
+                console.log("Scanning blocks", start, "-", latest);
+
+                //while there is a gap in block scanning
+
+              case 12:
+                if (!(span > 0)) {
+                  _context4.next = 22;
+                  break;
+                }
+
+                _context4.next = 15;
                 return this.eventPuller.pullEvents({
                   fromBlock: start,
                   toBlock: latest
                 }, cb);
 
-              case 11:
+              case 15:
 
                 //reset the start for next iteration
                 start = latest + 1;
 
                 //grab the latest right now
-                _context4.next = 14;
+                _context4.next = 18;
                 return this.web3.eth.getBlockNumber();
 
-              case 14:
+              case 18:
                 latest = _context4.sent;
 
 
                 //compute new span
                 span = latest - start;
-                _context4.next = 8;
+                _context4.next = 12;
                 break;
 
-              case 18:
+              case 22:
 
                 console.log("Finished recovering past events");
 
@@ -209,44 +252,53 @@ var EventStream = function (_EventEmitter) {
                         switch (_context3.prev = _context3.next) {
                           case 0:
                             if (!block) {
-                              _context3.next = 6;
+                              _context3.next = 12;
                               break;
                             }
 
+                            _context3.prev = 1;
+
                             console.log("Receiving new block", block.number);
+                            //we start from the last block we pulled so that
+                            //if there are missing notifications we still pull
+                            //all the data
                             _start = lastBlock;
 
-                            lastBlock = block.blockNumber;
-                            _context3.next = 6;
+
+                            console.log("Pulling events between blocks", _start, "-", block.number);
+                            _context3.next = 7;
                             return _this2.eventPuller.pullEvents({
                               fromBlock: _start,
-                              toBlock: block.blockNumber
+                              toBlock: block.number
                             }, function () {
                               var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(e, normalizedBlock) {
                                 return regeneratorRuntime.wrap(function _callee2$(_context2) {
                                   while (1) {
                                     switch (_context2.prev = _context2.next) {
                                       case 0:
-                                        _context2.prev = 0;
-                                        _context2.next = 3;
+                                        if (normalizedBlock.transactions.length > 0) {
+                                          lastBlock = normalizedBlock.number + 1;
+                                        }
+                                        _context2.prev = 1;
+                                        _context2.next = 4;
                                         return _this2.router.process({}, normalizedBlock);
 
-                                      case 3:
-                                        _context2.next = 8;
+                                      case 4:
+                                        _context2.next = 9;
                                         break;
 
-                                      case 5:
-                                        _context2.prev = 5;
-                                        _context2.t0 = _context2['catch'](0);
+                                      case 6:
+                                        _context2.prev = 6;
+                                        _context2.t0 = _context2['catch'](1);
 
                                         _this2.emit("error", _context2.t0);
 
-                                      case 8:
+                                      case 9:
                                       case 'end':
                                         return _context2.stop();
                                     }
                                   }
-                                }, _callee2, _this2, [[0, 5]]);
+                                }, _callee2, _this2, [[1, 6]]);
                               }));
 
                               return function (_x5, _x6) {
@@ -254,12 +306,22 @@ var EventStream = function (_EventEmitter) {
                               };
                             }());
 
-                          case 6:
+                          case 7:
+                            _context3.next = 12;
+                            break;
+
+                          case 9:
+                            _context3.prev = 9;
+                            _context3.t0 = _context3['catch'](1);
+
+                            _this2.emit("error", _context3.t0);
+
+                          case 12:
                           case 'end':
                             return _context3.stop();
                         }
                       }
-                    }, _callee3, _this2);
+                    }, _callee3, _this2, [[1, 9]]);
                   }));
 
                   return function (_x4) {
@@ -267,7 +329,7 @@ var EventStream = function (_EventEmitter) {
                   };
                 }());
 
-              case 22:
+              case 26:
               case 'end':
                 return _context4.stop();
             }

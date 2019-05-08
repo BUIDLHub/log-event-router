@@ -6,6 +6,11 @@ const {
   EventStream
 } = require('event-stream');
 
+const {
+  storageMiddleware,
+  storageInstance
+} = require("event-storage");
+
 
 const NETWORK = 'mainnet';
 const RPC_ENDPOINT = `wss://${NETWORK}.infura.io/ws`
@@ -50,18 +55,42 @@ const main = async () => {
   });
 
   const eventLogger = async (ctx) => {
+    let txn = ctx.txn;
+    await ctx.storage.store({
+      database: "LastBlock",
+      key: "lastBlock",
+      data: {
+        blockNumber: txn.blockNumber,
+        timestamp: txn.timestamp
+      }
+    });
+
     console.log('received events...');
     console.log(JSON.stringify(ctx, null, 2));
   }
 
+  stream.use(storageMiddleware());
   stream.use(eventLogger);
-  //stream.use("breedWithAuto", eventLogger);
-  //stream.use("giveBirth", eventLogger);
 
-  const latest = await web3.eth.getBlockNumber();
+  let r = await storageInstance().readAll({
+    database: "LastBlock",
+    sort: [
+      {
+        field: "blockNumber",
+        order: "DESC"
+      }
+    ],
+    limit: 1
+  });
+
+  let start = r[0]?r[0].blockNumber:0;
+  if(!start) {
+    const latest = await web3.eth.getBlockNumber();
+    start = latest - 10;
+  }
 
   await stream.start({
-    fromBlock: latest - 50
+    fromBlock: start
   });
 }
 

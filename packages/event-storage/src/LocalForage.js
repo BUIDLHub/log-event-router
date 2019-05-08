@@ -11,12 +11,39 @@ import BaseDB, {
   iterateSchema
 } from './BaseDB';
 import _ from 'lodash';
+import LocalFS from "./LocalFSStorage";
 
 extendPrototype(localforage);
 
+const canStoreInLN = () => {
+  try {
+
+    localStorage.setItem("__test", "true");
+
+    let i = localStorage.getItem("__test");
+    console.log("LS test", i);
+    if(!i) {
+      return false;
+    }
+    localStorage.removeItem("__test");
+    return true;
+  } catch (e) {
+    console.log("Problem storing LS", e);
+    return false;
+  }
+}
+
+const localStorageValid = () => {
+  console.log("Testing local storage");
+  return (typeof localStorage !== 'undefined') &&
+            'setItem' in localStorage &&
+            canStoreInLS()
+}
+
 const dbFactory = async props => {
   var db = await localforage.createInstance({
-    name: props.name
+    name: props.name,
+    driver: "localFSDriver"
   });
   return db;
 }
@@ -54,7 +81,13 @@ const _buildSortFn = props => {
 let inst = null;
 export default class LocalForage extends BaseDB {
   static get instance() {
+
     if(!inst) {
+      if(!localStorageValid()) {
+        console.log("Installing local FS driver...");
+        let local = new LocalFS();
+        localforage.defineDriver(local);
+      }
       inst = new LocalForage();
     }
     return inst;

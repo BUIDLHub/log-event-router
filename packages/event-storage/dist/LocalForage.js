@@ -20,6 +20,10 @@ var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
+var _LocalFSStorage = require('./LocalFSStorage');
+
+var _LocalFSStorage2 = _interopRequireDefault(_LocalFSStorage);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -32,6 +36,29 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 
 (0, _localforageSetitems.extendPrototype)(_localforage2.default);
 
+var canStoreInLN = function canStoreInLN() {
+  try {
+
+    localStorage.setItem("__test", "true");
+
+    var i = localStorage.getItem("__test");
+    console.log("LS test", i);
+    if (!i) {
+      return false;
+    }
+    localStorage.removeItem("__test");
+    return true;
+  } catch (e) {
+    console.log("Problem storing LS", e);
+    return false;
+  }
+};
+
+var localStorageValid = function localStorageValid() {
+  console.log("Testing local storage");
+  return typeof localStorage !== 'undefined' && 'setItem' in localStorage && canStoreInLS();
+};
+
 var dbFactory = function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(props) {
     var db;
@@ -41,7 +68,8 @@ var dbFactory = function () {
           case 0:
             _context.next = 2;
             return _localforage2.default.createInstance({
-              name: props.name
+              name: props.name,
+              driver: "localFSDriver"
             });
 
           case 2:
@@ -97,7 +125,13 @@ var LocalForage = function (_BaseDB) {
   _createClass(LocalForage, null, [{
     key: 'instance',
     get: function get() {
+
       if (!inst) {
+        if (!localStorageValid()) {
+          console.log("Installing local FS driver...");
+          var local = new _LocalFSStorage2.default();
+          _localforage2.default.defineDriver(local);
+        }
         inst = new LocalForage();
       }
       return inst;

@@ -63,13 +63,13 @@ export default class EventPuller {
       //block changes
       let block = events.length>0?events[0].blockNumber:0;
       let currentBlock = {
-        blockNumber: block,
+        number: block,
         transactions: []
       };
 
       for(let i=0;i<events.length;++i) {
         let evt = events[i];
-        
+
         if(evt.blockNumber !== block) {
           //new block, convert what we've built up to transaction set
           currentBlock.transactions = _.values(ctx.history);
@@ -83,7 +83,7 @@ export default class EventPuller {
             console.log("Problem sending event block to callback", e);
           }
           currentBlock = {
-            blockNumber: evt.blockNumber,
+            number: evt.blockNumber,
             transactions: []
           };
           ctx.history = {};
@@ -120,6 +120,7 @@ export default class EventPuller {
       } else {
         ctx.done();
       }
+
     } catch (e) {
       if(e.message.includes("more than 1000 results")) {
         if(span <= 1) {
@@ -133,6 +134,8 @@ export default class EventPuller {
           increment: span,
           end: Math.ceil(span/2) + ctx.start
         }, cb);
+      } else {
+        ctx.err(e);
       }
     }
   }
