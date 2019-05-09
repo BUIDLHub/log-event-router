@@ -93,24 +93,26 @@ var EventPuller = function () {
     key: '_doPull',
     value: function () {
       var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(ctx, cb) {
-        var span, config, evtName, start, events, block, currentBlock, i, evt;
+        var span, config, evtName, start, events, block, fromChain, currentBlock, i, evt, next, newSpan;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
                 span = ctx.end - ctx.start;
+
+                console.log("Querying for logs in range", ctx.start, "-", ctx.end);
                 config = _extends({}, this.options, {
                   fromBlock: ctx.start,
                   toBlock: ctx.end,
                   address: this.address
                 });
-                _context2.prev = 2;
+                _context2.prev = 3;
                 evtName = this.eventName || "allEvents";
                 start = Date.now();
-                _context2.next = 7;
+                _context2.next = 8;
                 return this.contract.getPastEvents(evtName, config);
 
-              case 7:
+              case 8:
                 events = _context2.sent;
 
                 console.log("Retrieved", events.length, "events in", Date.now() - start, "ms");
@@ -123,24 +125,39 @@ var EventPuller = function () {
                 //now with sorted blocks, we can normalize and then announce based on
                 //block changes
                 block = events.length > 0 ? events[0].blockNumber : 0;
+                _context2.next = 14;
+                return this.web3.eth.getBlock(block);
+
+              case 14:
+                fromChain = _context2.sent;
                 currentBlock = {
                   number: block,
-                  transactions: []
+                  transactions: [],
+                  timestamp: fromChain
                 };
                 i = 0;
 
-              case 13:
+              case 17:
                 if (!(i < events.length)) {
-                  _context2.next = 40;
+                  _context2.next = 50;
                   break;
                 }
 
                 evt = events[i];
 
+                evt.timestamp = currentBlock.timestamp;
+
                 if (!(evt.blockNumber !== block)) {
-                  _context2.next = 29;
+                  _context2.next = 37;
                   break;
                 }
+
+                _context2.next = 23;
+                return this.web3.eth.getBlock(evt.blockNumber);
+
+              case 23:
+                fromChain = _context2.sent;
+
 
                 //new block, convert what we've built up to transaction set
                 currentBlock.transactions = _lodash2.default.values(ctx.history);
@@ -148,51 +165,55 @@ var EventPuller = function () {
                 currentBlock.transactions.sort(function (a, b) {
                   return a.transactionIndex - b.transactionIndex;
                 });
-                _context2.prev = 18;
-                _context2.next = 21;
+                _context2.prev = 26;
+                _context2.next = 29;
                 return cb(null, currentBlock);
 
-              case 21:
-                _context2.next = 26;
+              case 29:
+                _context2.next = 34;
                 break;
 
-              case 23:
-                _context2.prev = 23;
-                _context2.t0 = _context2['catch'](18);
+              case 31:
+                _context2.prev = 31;
+                _context2.t0 = _context2['catch'](26);
 
                 console.log("Problem sending event block to callback", _context2.t0);
 
-              case 26:
+              case 34:
                 currentBlock = {
                   number: evt.blockNumber,
-                  transactions: []
+                  transactions: [],
+                  timestamp: fromChain.timestamp
                 };
                 ctx.history = {};
                 block = evt.blockNumber;
 
-              case 29:
-                _context2.prev = 29;
-                _context2.next = 32;
+              case 37:
+                _context2.prev = 37;
+
+                console.log("Normalizing event's transaction from block: " + evt.blockNumber);
+                _context2.next = 41;
                 return this.normalizer.normalize(evt, ctx.history);
 
-              case 32:
-                _context2.next = 37;
+              case 41:
+                console.log("Txn normalized");
+                _context2.next = 47;
                 break;
 
-              case 34:
-                _context2.prev = 34;
-                _context2.t1 = _context2['catch'](29);
+              case 44:
+                _context2.prev = 44;
+                _context2.t1 = _context2['catch'](37);
 
                 console.log("Problem normalizing", _context2.t1);
 
-              case 37:
+              case 47:
                 ++i;
-                _context2.next = 13;
+                _context2.next = 17;
                 break;
 
-              case 40:
+              case 50:
                 if (!(_lodash2.default.values(ctx.history).length > 0)) {
-                  _context2.next = 51;
+                  _context2.next = 61;
                   break;
                 }
 
@@ -202,68 +223,96 @@ var EventPuller = function () {
                 currentBlock.transactions.sort(function (a, b) {
                   return a.transactionIndex - b.transactionIndex;
                 });
-                _context2.prev = 43;
-                _context2.next = 46;
+                _context2.prev = 53;
+                _context2.next = 56;
                 return cb(null, currentBlock);
 
-              case 46:
-                _context2.next = 51;
-                break;
-
-              case 48:
-                _context2.prev = 48;
-                _context2.t2 = _context2['catch'](43);
-
-                console.log("Problem sending event block to callback", _context2.t2);
-
-              case 51:
-                if (!(ctx.finalEnd !== ctx.end)) {
-                  _context2.next = 55;
-                  break;
-                }
-
-                return _context2.abrupt('return', this._doStart(_extends({}, ctx, {
-                  end: Math.ceil(ctx.increment) + ctx.start
-                }), cb));
-
-              case 55:
-                ctx.done();
-
               case 56:
-                _context2.next = 67;
+                _context2.next = 61;
                 break;
 
               case 58:
                 _context2.prev = 58;
-                _context2.t3 = _context2['catch'](2);
+                _context2.t2 = _context2['catch'](53);
 
-                if (!_context2.t3.message.includes("more than 1000 results")) {
-                  _context2.next = 66;
+                console.log("Problem sending event block to callback", _context2.t2);
+
+              case 61:
+                if (!(ctx.finalEnd > ctx.end)) {
+                  _context2.next = 67;
                   break;
                 }
 
+                //means we had to split into sub-queries
+                next = _extends({}, ctx, {
+                  start: ctx.end + 1,
+                  end: ctx.end + 1 + Math.ceil(ctx.increment)
+                });
+
+                console.log("Going to next pull segment", next);
+                return _context2.abrupt('return', this._doPull(next, cb));
+
+              case 67:
+                console.log("Finished all segments");
+                ctx.done();
+
+              case 69:
+                _context2.next = 87;
+                break;
+
+              case 71:
+                _context2.prev = 71;
+                _context2.t3 = _context2['catch'](3);
+
+                if (!_context2.t3.message.includes("more than 1000 results")) {
+                  _context2.next = 85;
+                  break;
+                }
+
+                console.log("Have to split query apart");
+
                 if (!(span <= 1)) {
-                  _context2.next = 63;
+                  _context2.next = 77;
                   break;
                 }
 
                 throw _context2.t3;
 
-              case 63:
-                return _context2.abrupt('return', this._doStart(_extends({}, ctx, {
-                  increment: span,
-                  end: Math.ceil(span / 2) + ctx.start
+              case 77:
+                //otherwise, cut the span in 1/2 and try again
+                newSpan = Math.ceil(span / 2);
+
+                if (!(newSpan === 0)) {
+                  _context2.next = 80;
+                  break;
+                }
+
+                throw _context2.t3;
+
+              case 80:
+                if (!(newSpan + ctx.start === ctx.start)) {
+                  _context2.next = 82;
+                  break;
+                }
+
+                throw _context2.t3;
+
+              case 82:
+                return _context2.abrupt('return', this._doPull(_extends({}, ctx, {
+                  increment: newSpan,
+                  end: newSpan + ctx.start
                 }), cb));
 
-              case 66:
+              case 85:
+                console.log("Problem pulling events", _context2.t3);
                 ctx.err(_context2.t3);
 
-              case 67:
+              case 87:
               case 'end':
                 return _context2.stop();
             }
           }
-        }, _callee2, this, [[2, 58], [18, 23], [29, 34], [43, 48]]);
+        }, _callee2, this, [[3, 71], [26, 31], [37, 44], [53, 58]]);
       }));
 
       function _doPull(_x3, _x4) {

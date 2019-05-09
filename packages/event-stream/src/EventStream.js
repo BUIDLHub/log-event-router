@@ -79,7 +79,7 @@ export default class EventStream extends EventEmitter {
     //callback for event puller.
     let cb = async (e, block) => {
       try {
-        console.log("Received block", block);
+        console.log("Received block", block.number);
         //route the block to the router for handling
         await this.router.process({}, block);
       } catch (e) {

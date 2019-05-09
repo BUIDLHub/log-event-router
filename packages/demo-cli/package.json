@@ -14,6 +14,7 @@
     "event-redux": "^0.1.0",
     "event-storage": "^0.1.0",
     "event-stream": "^0.1.0",
-    "web3": "^1.0.0-beta.54"
+    "web3": "^1.0.0-beta.54",
+    "dotenv": "^8.0.0"
   }
 }

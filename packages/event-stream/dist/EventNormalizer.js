@@ -65,8 +65,17 @@ var EventNormalizer = function () {
             switch (_context.prev = _context.next) {
               case 0:
                 retVals = event.returnValues;
-                //convert big numbers to strings to simplify working with event fields
 
+                if (retVals) {
+                  _context.next = 3;
+                  break;
+                }
+
+                return _context.abrupt('return');
+
+              case 3:
+
+                //convert big numbers to strings to simplify working with event fields
                 _lodash2.default.keys(retVals).forEach(function (k) {
                   var d = retVals[k];
                   if (d._ethersType === 'BigNumber') {
@@ -77,15 +86,17 @@ var EventNormalizer = function () {
                 txn = history[event.transactionHash.toLowerCase()];
 
                 if (txn) {
-                  _context.next = 10;
+                  _context.next = 13;
                   break;
                 }
 
                 start = Date.now();
-                _context.next = 7;
+
+                console.log("Pulling txn: " + event.transactionHash);
+                _context.next = 10;
                 return this.web3.eth.getTransaction(event.transactionHash);
 
-              case 7:
+              case 10:
                 txn = _context.sent;
 
                 console.log("Retrieved txn in ", Date.now() - start, "ms");
@@ -113,7 +124,7 @@ var EventNormalizer = function () {
                   txn.logEvents = {};
                 }
 
-              case 10:
+              case 13:
                 if (txn) {
                   le = _extends({}, txn.logEvents);
                   ex = le[event.event];
@@ -129,7 +140,7 @@ var EventNormalizer = function () {
                   txn.logEvents = le;
                 }
 
-              case 11:
+              case 14:
               case 'end':
                 return _context.stop();
             }

@@ -31,6 +31,10 @@ export default class EventNormalizer {
 
   async normalize(event, history) {
     let retVals = event.returnValues;
+    if(!retVals) {
+      return;
+    }
+
     //convert big numbers to strings to simplify working with event fields
     _.keys(retVals).forEach(k=>{
       let d = retVals[k];
@@ -43,6 +47,7 @@ export default class EventNormalizer {
 
     if(!txn) {
       let start = Date.now();
+      console.log("Pulling txn: " + event.transactionHash);
       txn = await this.web3.eth.getTransaction(event.transactionHash);
       console.log("Retrieved txn in ", (Date.now()-start),"ms");
       if(txn) {

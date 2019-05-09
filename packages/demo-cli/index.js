@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const axios = require('axios');
 const _ = require('lodash');
 
@@ -13,10 +15,9 @@ const {
 
 
 const NETWORK = 'mainnet';
-const RPC_ENDPOINT = `wss://${NETWORK}.infura.io/ws`
+const RPC_ENDPOINT = process.env.RPC_ENDPOINT;
 const BASE_ABI_URL = "https://api.etherscan.io/api?module=contract&action=getabi&address=";
-const CONTRACT = "0x06012c8cf97bead5deae237070f9587f8e7a266d";
-
+const CONTRACT = process.env.CONTRACT;
 
 const fetchABI = async (address) => {
   let abiUrl = BASE_ABI_URL + CONTRACT;
@@ -56,17 +57,20 @@ const main = async () => {
 
   const eventLogger = async (ctx) => {
     let txn = ctx.txn;
-    await ctx.storage.store({
-      database: "LastBlock",
-      key: "lastBlock",
-      data: {
-        blockNumber: txn.blockNumber,
-        timestamp: txn.timestamp
-      }
-    });
+    if(ctx.storage) {
+      await ctx.storage.store({
+        database: "LastBlock",
+        key: "lastBlock",
+        data: {
+          blockNumber: txn.blockNumber,
+          timestamp: txn.timestamp
+        }
+      });
+    }
 
-    console.log('received events...');
-    console.log(JSON.stringify(ctx, null, 2));
+    let events = _.values(txn.logEvents);
+    console.log('received ',events.length,'events in block',txn.blockNumber);
+    //console.log(JSON.stringify(ctx, null, 2));
   }
 
   stream.use(storageMiddleware());
@@ -86,7 +90,7 @@ const main = async () => {
   let start = r[0]?r[0].blockNumber:0;
   if(!start) {
     const latest = await web3.eth.getBlockNumber();
-    start = latest - 10;
+    start = latest - 8000;
   }
 
   await stream.start({

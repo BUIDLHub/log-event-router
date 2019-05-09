@@ -40,7 +40,7 @@ export default class EventPuller {
 
   async _doPull(ctx, cb) {
     let span = ctx.end - ctx.start;
-
+    console.log("Querying for logs in range", ctx.start, "-", ctx.end);
     let config = {
       ...this.options,
       fromBlock: ctx.start,
@@ -52,7 +52,7 @@ export default class EventPuller {
       let evtName = this.eventName || "allEvents";
       let start = Date.now();
       let events = await this.contract.getPastEvents(evtName, config);
-      console.log("Retrieved", events.length,"events in",(Date.now()-start),"ms");
+      console.log("Retrieved", events.length, "events in", (Date.now()-start),"ms");
 
       //make sure we're sorted by ascending block number
       events.sort((a,b)=>{
@@ -62,15 +62,20 @@ export default class EventPuller {
       //now with sorted blocks, we can normalize and then announce based on
       //block changes
       let block = events.length>0?events[0].blockNumber:0;
+      let fromChain = await this.web3.eth.getBlock(block);
       let currentBlock = {
         number: block,
-        transactions: []
+        transactions: [],
+        timestamp: fromChain
       };
 
       for(let i=0;i<events.length;++i) {
         let evt = events[i];
+        evt.timestamp = currentBlock.timestamp;
 
         if(evt.blockNumber !== block) {
+          fromChain = await this.web3.eth.getBlock(evt.blockNumber);
+
           //new block, convert what we've built up to transaction set
           currentBlock.transactions = _.values(ctx.history);
           //ordered by txn index
@@ -84,13 +89,16 @@ export default class EventPuller {
           }
           currentBlock = {
             number: evt.blockNumber,
-            transactions: []
+            transactions: [],
+            timestamp: fromChain.timestamp
           };
           ctx.history = {};
           block = evt.blockNumber;
         }
         try {
+          console.log("Normalizing event's transaction from block: " + evt.blockNumber);
           await this.normalizer.normalize(evt,ctx.history);
+          console.log("Txn normalized");
         } catch (e) {
           console.log("Problem normalizing", e);
         }
@@ -111,30 +119,46 @@ export default class EventPuller {
         }
       }
 
-      if(ctx.finalEnd !== ctx.end) {
+      if(ctx.finalEnd > ctx.end) {
         //means we had to split into sub-queries
-        return this._doStart({
+        let next = {
           ...ctx,
-          end: Math.ceil(ctx.increment) + ctx.start
-        }, cb)
+          start: ctx.end+1,
+          end: ctx.end + 1 + Math.ceil(ctx.increment)
+        };
+        console.log("Going to next pull segment", next);
+        return this._doPull(next, cb)
+
       } else {
+        console.log("Finished all segments");
         ctx.done();
       }
 
     } catch (e) {
       if(e.message.includes("more than 1000 results")) {
+        console.log("Have to split query apart");
         if(span <= 1) {
           //we've already reduced it as much as we can reduce
           //the span so have to bail out.
           throw e;
         }
         //otherwise, cut the span in 1/2 and try again
-        return this._doStart({
+        let newSpan = Math.ceil(span/2);
+        if(newSpan === 0) {
+          throw e;
+        }
+
+        if(newSpan + ctx.start === ctx.start) {
+          throw e;
+        }
+
+        return this._doPull({
           ...ctx,
-          increment: span,
-          end: Math.ceil(span/2) + ctx.start
+          increment: newSpan,
+          end: newSpan + ctx.start
         }, cb);
       } else {
+        console.log("Problem pulling events", e);
         ctx.err(e);
       }
     }

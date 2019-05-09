@@ -143,7 +143,7 @@ var EventStream = function (_EventEmitter) {
                           case 0:
                             _context.prev = 0;
 
-                            console.log("Received block", block);
+                            console.log("Received block", block.number);
                             //route the block to the router for handling
                             _context.next = 4;
                             return _this2.router.process({}, block);
