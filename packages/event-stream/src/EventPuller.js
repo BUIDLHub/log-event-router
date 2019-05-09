@@ -62,11 +62,19 @@ export default class EventPuller {
       //now with sorted blocks, we can normalize and then announce based on
       //block changes
       let block = events.length>0?events[0].blockNumber:0;
-      let fromChain = await this.web3.eth.getBlock(block);
+      let fromChain = null;
+      if(block) {
+        console.log("Pulling block", block)
+        fromChain = await this.web3.eth.getBlock(block);
+        console.log("Block time", fromChain.timestamp);
+      } else {
+        fromChain = { timestamp: 0 }
+      }
+
       let currentBlock = {
         number: block,
         transactions: [],
-        timestamp: fromChain
+        timestamp: fromChain.timestamp
       };
 
       for(let i=0;i<events.length;++i) {

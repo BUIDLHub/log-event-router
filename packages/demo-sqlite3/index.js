@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const axios = require('axios');
 const _ = require('lodash');
 const util = require('util');
@@ -14,9 +16,9 @@ const {
 } = require("event-storage");
 
 const NETWORK = 'mainnet';
-const RPC_ENDPOINT = `wss://${NETWORK}.infura.io/ws`
+const RPC_ENDPOINT = process.env.RPC_ENDPOINT; //`wss://${NETWORK}.infura.io/ws`
 const BASE_ABI_URL = "https://api.etherscan.io/api?module=contract&action=getabi&address=";
-const CONTRACT = "0x06012c8cf97bead5deae237070f9587f8e7a266d";
+const CONTRACT = process.env.CONTRACT; //"0x06012c8cf97bead5deae237070f9587f8e7a266d";
 
 
 const asyncify = (target) => {

@@ -125,21 +125,38 @@ var EventPuller = function () {
                 //now with sorted blocks, we can normalize and then announce based on
                 //block changes
                 block = events.length > 0 ? events[0].blockNumber : 0;
-                _context2.next = 14;
+                fromChain = null;
+
+                if (!block) {
+                  _context2.next = 21;
+                  break;
+                }
+
+                console.log("Pulling block", block);
+                _context2.next = 17;
                 return this.web3.eth.getBlock(block);
 
-              case 14:
+              case 17:
                 fromChain = _context2.sent;
+
+                console.log("Block time", fromChain.timestamp);
+                _context2.next = 22;
+                break;
+
+              case 21:
+                fromChain = { timestamp: 0 };
+
+              case 22:
                 currentBlock = {
                   number: block,
                   transactions: [],
-                  timestamp: fromChain
+                  timestamp: fromChain.timestamp
                 };
                 i = 0;
 
-              case 17:
+              case 24:
                 if (!(i < events.length)) {
-                  _context2.next = 50;
+                  _context2.next = 57;
                   break;
                 }
 
@@ -148,14 +165,14 @@ var EventPuller = function () {
                 evt.timestamp = currentBlock.timestamp;
 
                 if (!(evt.blockNumber !== block)) {
-                  _context2.next = 37;
+                  _context2.next = 44;
                   break;
                 }
 
-                _context2.next = 23;
+                _context2.next = 30;
                 return this.web3.eth.getBlock(evt.blockNumber);
 
-              case 23:
+              case 30:
                 fromChain = _context2.sent;
 
 
@@ -165,21 +182,21 @@ var EventPuller = function () {
                 currentBlock.transactions.sort(function (a, b) {
                   return a.transactionIndex - b.transactionIndex;
                 });
-                _context2.prev = 26;
-                _context2.next = 29;
+                _context2.prev = 33;
+                _context2.next = 36;
                 return cb(null, currentBlock);
 
-              case 29:
-                _context2.next = 34;
+              case 36:
+                _context2.next = 41;
                 break;
 
-              case 31:
-                _context2.prev = 31;
-                _context2.t0 = _context2['catch'](26);
+              case 38:
+                _context2.prev = 38;
+                _context2.t0 = _context2['catch'](33);
 
                 console.log("Problem sending event block to callback", _context2.t0);
 
-              case 34:
+              case 41:
                 currentBlock = {
                   number: evt.blockNumber,
                   transactions: [],
@@ -188,32 +205,32 @@ var EventPuller = function () {
                 ctx.history = {};
                 block = evt.blockNumber;
 
-              case 37:
-                _context2.prev = 37;
-
-                console.log("Normalizing event's transaction from block: " + evt.blockNumber);
-                _context2.next = 41;
-                return this.normalizer.normalize(evt, ctx.history);
-
-              case 41:
-                console.log("Txn normalized");
-                _context2.next = 47;
-                break;
-
               case 44:
                 _context2.prev = 44;
-                _context2.t1 = _context2['catch'](37);
+
+                console.log("Normalizing event's transaction from block: " + evt.blockNumber);
+                _context2.next = 48;
+                return this.normalizer.normalize(evt, ctx.history);
+
+              case 48:
+                console.log("Txn normalized");
+                _context2.next = 54;
+                break;
+
+              case 51:
+                _context2.prev = 51;
+                _context2.t1 = _context2['catch'](44);
 
                 console.log("Problem normalizing", _context2.t1);
 
-              case 47:
+              case 54:
                 ++i;
-                _context2.next = 17;
+                _context2.next = 24;
                 break;
 
-              case 50:
+              case 57:
                 if (!(_lodash2.default.values(ctx.history).length > 0)) {
-                  _context2.next = 61;
+                  _context2.next = 68;
                   break;
                 }
 
@@ -223,23 +240,23 @@ var EventPuller = function () {
                 currentBlock.transactions.sort(function (a, b) {
                   return a.transactionIndex - b.transactionIndex;
                 });
-                _context2.prev = 53;
-                _context2.next = 56;
+                _context2.prev = 60;
+                _context2.next = 63;
                 return cb(null, currentBlock);
 
-              case 56:
-                _context2.next = 61;
+              case 63:
+                _context2.next = 68;
                 break;
 
-              case 58:
-                _context2.prev = 58;
-                _context2.t2 = _context2['catch'](53);
+              case 65:
+                _context2.prev = 65;
+                _context2.t2 = _context2['catch'](60);
 
                 console.log("Problem sending event block to callback", _context2.t2);
 
-              case 61:
+              case 68:
                 if (!(ctx.finalEnd > ctx.end)) {
-                  _context2.next = 67;
+                  _context2.next = 74;
                   break;
                 }
 
@@ -252,67 +269,67 @@ var EventPuller = function () {
                 console.log("Going to next pull segment", next);
                 return _context2.abrupt('return', this._doPull(next, cb));
 
-              case 67:
+              case 74:
                 console.log("Finished all segments");
                 ctx.done();
 
-              case 69:
-                _context2.next = 87;
+              case 76:
+                _context2.next = 94;
                 break;
 
-              case 71:
-                _context2.prev = 71;
+              case 78:
+                _context2.prev = 78;
                 _context2.t3 = _context2['catch'](3);
 
                 if (!_context2.t3.message.includes("more than 1000 results")) {
-                  _context2.next = 85;
+                  _context2.next = 92;
                   break;
                 }
 
                 console.log("Have to split query apart");
 
                 if (!(span <= 1)) {
-                  _context2.next = 77;
+                  _context2.next = 84;
                   break;
                 }
 
                 throw _context2.t3;
 
-              case 77:
+              case 84:
                 //otherwise, cut the span in 1/2 and try again
                 newSpan = Math.ceil(span / 2);
 
                 if (!(newSpan === 0)) {
-                  _context2.next = 80;
+                  _context2.next = 87;
                   break;
                 }
 
                 throw _context2.t3;
 
-              case 80:
+              case 87:
                 if (!(newSpan + ctx.start === ctx.start)) {
-                  _context2.next = 82;
+                  _context2.next = 89;
                   break;
                 }
 
                 throw _context2.t3;
 
-              case 82:
+              case 89:
                 return _context2.abrupt('return', this._doPull(_extends({}, ctx, {
                   increment: newSpan,
                   end: newSpan + ctx.start
                 }), cb));
 
-              case 85:
+              case 92:
                 console.log("Problem pulling events", _context2.t3);
                 ctx.err(_context2.t3);
 
-              case 87:
+              case 94:
               case 'end':
                 return _context2.stop();
             }
           }
-        }, _callee2, this, [[3, 71], [26, 31], [37, 44], [53, 58]]);
+        }, _callee2, this, [[3, 78], [33, 38], [44, 51], [60, 65]]);
       }));
 
       function _doPull(_x3, _x4) {
