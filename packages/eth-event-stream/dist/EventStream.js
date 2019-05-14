@@ -135,7 +135,12 @@ var EventStream = function (_EventEmitter) {
 
     /**
      * Start the stream and start scanning from the fromBlock-toBlock range.
-     * Be sure to install all router handlers  before starting the stream
+     * Optionally provide a specific event to query, filter options, and a
+     * block lag to stay behind the top of the chain by a certain number of
+     * blocks. Historical event recovery happens first and once that is complete,
+     * event subscriptions begin and the async promise from this fn will complete.
+     *
+     * Be sure to install all router handlers before starting the stream
      */
 
   }, {
@@ -147,7 +152,8 @@ var EventStream = function (_EventEmitter) {
         var fromBlock = _ref3.fromBlock,
             toBlock = _ref3.toBlock,
             eventName = _ref3.eventName,
-            options = _ref3.options;
+            options = _ref3.options,
+            lag = _ref3.lag;
         var web3, latest, start, span, s, lastBlock, subHandler;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
@@ -156,49 +162,54 @@ var EventStream = function (_EventEmitter) {
                 if (fromBlock < 0) {
                   fromBlock = 0;
                 }
+                if (isNaN(lag)) {
+                  lag = 0;
+                }
 
                 web3 = this.web3Factory();
                 //see if we can subscribe
 
-                _context3.prev = 2;
-                _context3.next = 5;
+                _context3.prev = 3;
+                _context3.next = 6;
                 return testWeb3(web3);
 
-              case 5:
-                _context3.next = 10;
+              case 6:
+                _context3.next = 11;
                 break;
 
-              case 7:
-                _context3.prev = 7;
-                _context3.t0 = _context3['catch'](2);
+              case 8:
+                _context3.prev = 8;
+                _context3.t0 = _context3['catch'](3);
 
                 this.pollWeb3 = true;
 
-              case 10:
+              case 11:
 
                 //first need to recover missed events since last run
                 latest = toBlock;
 
                 if (latest) {
-                  _context3.next = 15;
+                  _context3.next = 17;
                   break;
                 }
 
-                _context3.next = 14;
+                _context3.next = 15;
                 return web3.eth.getBlockNumber();
 
-              case 14:
+              case 15:
                 latest = _context3.sent;
 
-              case 15:
+                latest -= lag;
+
+              case 17:
                 if (!(latest < fromBlock)) {
-                  _context3.next = 17;
+                  _context3.next = 19;
                   break;
                 }
 
                 throw new Error("Start block must come before end block: " + fromBlock + " > " + latest);
 
-              case 17:
+              case 19:
                 start = fromBlock;
                 span = latest - start;
 
@@ -207,13 +218,13 @@ var EventStream = function (_EventEmitter) {
 
                 //while there is a gap in block scanning
 
-              case 21:
+              case 23:
                 if (!(span > 0)) {
-                  _context3.next = 33;
+                  _context3.next = 36;
                   break;
                 }
 
-                _context3.next = 24;
+                _context3.next = 26;
                 return this.eventHistory.recoverEvents({
                   fromBlock: start,
                   toBlock: latest,
@@ -224,7 +235,7 @@ var EventStream = function (_EventEmitter) {
                   return _this2._handleBlockBundles(e, { web3: web3 }, bundles);
                 });
 
-              case 24:
+              case 26:
 
                 log.info("Finished recovering batch of events...");
 
@@ -232,20 +243,21 @@ var EventStream = function (_EventEmitter) {
                 start = latest + 1;
 
                 //grab the latest right now
-                _context3.next = 28;
+                _context3.next = 30;
                 return web3.eth.getBlockNumber();
 
-              case 28:
+              case 30:
                 latest = _context3.sent;
 
+                latest -= lag;
 
                 //compute new span
                 span = latest - start;
                 log.info("New end block is", latest, "and new span is", span);
-                _context3.next = 21;
+                _context3.next = 23;
                 break;
 
-              case 33:
+              case 36:
 
                 log.info("Finished recovering past events in", Date.now() - s, "ms");
                 lastBlock = latest;
@@ -280,7 +292,7 @@ var EventStream = function (_EventEmitter) {
                             _context2.next = 8;
                             return _this2.eventPuller.pullEvents({
                               fromBlock: _start,
-                              toBlock: block.number,
+                              toBlock: block.number - lag,
                               eventName: eventName,
                               options: options,
                               contract: _this2.contract
@@ -331,12 +343,12 @@ var EventStream = function (_EventEmitter) {
                 //new block
                 this.sub.start();
 
-              case 38:
+              case 41:
               case 'end':
                 return _context3.stop();
             }
           }
-        }, _callee3, this, [[2, 7]]);
+        }, _callee3, this, [[3, 8]]);
       }));
 
       function start(_x2) {

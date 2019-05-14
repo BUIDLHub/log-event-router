@@ -67,16 +67,25 @@ export default class EventStream extends EventEmitter {
 
   /**
    * Start the stream and start scanning from the fromBlock-toBlock range.
-   * Be sure to install all router handlers  before starting the stream
+   * Optionally provide a specific event to query, filter options, and a
+   * block lag to stay behind the top of the chain by a certain number of
+   * blocks. Historical event recovery happens first and once that is complete,
+   * event subscriptions begin and the async promise from this fn will complete.
+   *
+   * Be sure to install all router handlers before starting the stream
    */
   async start({
     fromBlock,
     toBlock,
     eventName,
-    options
+    options,
+    lag
   }) {
     if(fromBlock < 0) {
       fromBlock = 0;
+    }
+    if(isNaN(lag)) {
+      lag = 0;
     }
 
     let web3 = this.web3Factory();
@@ -92,6 +101,7 @@ export default class EventStream extends EventEmitter {
     if(!latest) {
       //go to the top of the current chain by default
       latest = await web3.eth.getBlockNumber();
+      latest -= lag;
     }
 
     if(latest < fromBlock) {
@@ -121,6 +131,7 @@ export default class EventStream extends EventEmitter {
 
       //grab the latest right now
       latest = await web3.eth.getBlockNumber();
+      latest -= lag;
 
       //compute new span
       span = latest - start;
@@ -142,7 +153,7 @@ export default class EventStream extends EventEmitter {
             log.debug("Pulling events between blocks",start,"-",block.number);
             await this.eventPuller.pullEvents({
               fromBlock: start,
-              toBlock: block.number,
+              toBlock: block.number-lag,
               eventName,
               options,
               contract: this.contract
