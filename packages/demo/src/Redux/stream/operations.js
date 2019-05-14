@@ -1,6 +1,6 @@
 import {Creators} from './actions';
 import {EventStream} from 'event-stream'
-import {storageMiddleware} from 'event-storage';
+import {storageMiddleware} from 'eth-event-storage';
 import {reduxMiddleware} from 'event-redux';
 import axios from 'axios';
 import _ from 'lodash';
@@ -31,7 +31,7 @@ const init = () => async (dispatch, getState) => {
     abi,
     //eventName: "Birth",
     address: CONTRACT,
-    web3
+    web3Factory: () => web3
   });
   stream.use(storageMiddleware());
   stream.use(reduxMiddleware(dispatch,getState));

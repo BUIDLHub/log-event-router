@@ -8,12 +8,13 @@ const Web3 = require('web3');
 
 const {
   EventStream
-} = require('event-stream');
+} = require('eth-event-stream');
 
 const {
   storageMiddleware,
   storageInstance
 } = require("event-storage");
+
 
 const NETWORK = 'mainnet';
 const RPC_ENDPOINT = process.env.RPC_ENDPOINT; //`wss://${NETWORK}.infura.io/ws`
@@ -119,19 +120,20 @@ const main = async () => {
   const stream = new EventStream({
     abi,
     address: CONTRACT,
-    web3
+    web3Factory: () => new Web3(RPC_ENDPOINT)
   });
 
   const eventLogger = async (ctx) => {
-    let txn = ctx.txn;
-    const {blockNumber, transactionIndex} = txn;
-    console.log({blockNumber, transactionIndex});
+    let bundle = ctx.bundle;
+    //let txn = ctx.txn;
+    const {blockNumber} = bundle;
+    console.log({blockNumber});
   };
 
   const eventRecorder = async (ctx) => {
-    let txn = ctx.txn;
+    let bundle = ctx.bundle;
 
-    const transferEvent = txn.logEvents['Transfer'];
+    const transferEvent = bundle.byName['Transfer'];
     if (transferEvent) {
       await recordTransfer.runAsync(
         transferEvent.returnValues.from,
@@ -145,7 +147,7 @@ const main = async () => {
       );
     }
 
-    const approvalEvent = txn.logEvents['Approval'];
+    const approvalEvent = bundle.byName['Approval'];
     if (approvalEvent) {
       await recordApproval.runAsync(
         approvalEvent.returnValues.tokenOwner,
@@ -159,7 +161,7 @@ const main = async () => {
       );
     }
 
-    await recordSetting.runAsync("last_block", txn.blockNumber);
+    await recordSetting.runAsync("last_block", bundle.blockNumber);
   };
 
   //stream.use(storageMiddleware());

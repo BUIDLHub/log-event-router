@@ -63,7 +63,7 @@
     "cross-env": "^5.2.0",
     "event-redux": "^0.1.0",
     "event-storage": "^0.1.0",
-    "event-stream": "^0.1.0",
+    "eth-event-stream": "^0.1.0",
     "font-awesome": "^4.7.0",
     "localforage": "^1.7.3",
     "localforage-setitems": "^1.4.0",

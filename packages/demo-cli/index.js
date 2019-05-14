@@ -6,13 +6,15 @@ const _ = require('lodash');
 const Web3 = require('web3');
 const {
   EventStream
-} = require('event-stream');
+} = require('eth-event-stream');
 
 const {
   storageMiddleware,
   storageInstance
 } = require("event-storage");
 
+const TxnBundler = require("eth-txn-bundler").default;
+const FnContext = require("eth-fn-context").default;
 
 const NETWORK = 'mainnet';
 const RPC_ENDPOINT = process.env.RPC_ENDPOINT;
@@ -46,17 +48,29 @@ const main = async () => {
   const abi = await fetchABI(CONTRACT);
 
   console.log(`setting up web3`);
-  const web3 = new Web3(RPC_ENDPOINT);
+  const web3Factory = () => new Web3(RPC_ENDPOINT);
+  const web3 = web3Factory();
 
   console.log(`setting up stream`);
   const stream = new EventStream({
     abi,
     address: CONTRACT,
-    web3
+    web3Factory
   });
 
+  //stream.use(new TxnBundler());
+  //stream.use(new FnContext({abi}));
+  stream.use(storageMiddleware());
+
   const eventLogger = async (ctx) => {
-    let txn = ctx.txn;
+    let bundle = ctx.bundle;
+    let txn = bundle.txn;
+    if(!txn) {
+      console.log("Received", bundle.length, "events in block", bundle.blockNumber);
+      console.log("Events", JSON.stringify(bundle.allEvents, null, 2));
+      return;
+    }
+
     if(ctx.storage) {
       await ctx.storage.store({
         database: "LastBlock",
@@ -68,12 +82,14 @@ const main = async () => {
       });
     }
 
-    let events = _.values(txn.logEvents);
-    console.log('received ',events.length,'events in block',txn.blockNumber);
-    //console.log(JSON.stringify(ctx, null, 2));
+    let events = bundle.allEvents;
+    console.log('received',events.length,'events in block',
+                txn.blockNumber+"."+txn.transactionIndex,
+                "with context",bundle.fnContext);
+
   }
 
-  stream.use(storageMiddleware());
+
   stream.use(eventLogger);
 
   let r = await storageInstance().readAll({
