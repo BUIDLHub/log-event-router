@@ -159,57 +159,59 @@ var EventPuller = function () {
                 ctx.done();
 
               case 38:
-                _context.next = 56;
+                _context.next = 57;
                 break;
 
               case 40:
                 _context.prev = 40;
                 _context.t1 = _context['catch'](3);
 
+                log.error("Problem in event puller", _context.t1);
+
                 if (!_context.t1.message.includes("more than 1000 results")) {
-                  _context.next = 54;
+                  _context.next = 55;
                   break;
                 }
 
                 log.info("Have to split query apart");
 
                 if (!(span <= 1)) {
-                  _context.next = 46;
+                  _context.next = 47;
                   break;
                 }
 
                 throw _context.t1;
 
-              case 46:
+              case 47:
                 //otherwise, cut the span in 1/2 and try again
                 newSpan = Math.ceil(span / 2);
 
                 if (!(newSpan === 0)) {
-                  _context.next = 49;
+                  _context.next = 50;
                   break;
                 }
 
                 throw _context.t1;
 
-              case 49:
+              case 50:
                 if (!(newSpan + ctx.start === ctx.start)) {
-                  _context.next = 51;
+                  _context.next = 52;
                   break;
                 }
 
                 throw _context.t1;
 
-              case 51:
+              case 52:
                 return _context.abrupt('return', this._doPull(_extends({}, ctx, {
                   increment: newSpan,
                   end: newSpan + ctx.start
                 }), cb));
 
-              case 54:
+              case 55:
                 log.error("Problem pulling events", _context.t1);
                 ctx.err(_context.t1);
 
-              case 56:
+              case 57:
               case 'end':
                 return _context.stop();
             }

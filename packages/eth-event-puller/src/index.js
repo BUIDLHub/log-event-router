@@ -92,6 +92,8 @@ export default class EventPuller {
       }
 
     } catch (e) {
+      log.error("Problem in event puller", e);
+      
       if(e.message.includes("more than 1000 results")) {
         log.info("Have to split query apart");
         if(span <= 1) {

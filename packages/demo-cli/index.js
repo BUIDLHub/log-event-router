@@ -13,6 +13,7 @@ const {
   storageInstance
 } = require("event-storage");
 
+const BHubHistory = require("bhub-history-puller").default;
 const TxnBundler = require("eth-txn-bundler").default;
 const FnContext = require("eth-fn-context").default;
 
@@ -67,7 +68,7 @@ const main = async () => {
     let txn = bundle.txn;
     if(!txn) {
       console.log("Received", bundle.length, "events in block", bundle.blockNumber);
-      console.log("Events", JSON.stringify(bundle.allEvents, null, 2));
+      //console.log("Events", JSON.stringify(bundle.allEvents, null, 2));
       return;
     }
 
