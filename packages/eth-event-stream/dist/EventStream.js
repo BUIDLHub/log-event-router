@@ -12,8 +12,6 @@ var _events2 = _interopRequireDefault(_events);
 
 var _ethEventPuller = require('eth-event-puller');
 
-var _ethEventPuller2 = _interopRequireDefault(_ethEventPuller);
-
 var _EventHistory = require('./EventHistory');
 
 var _EventHistory2 = _interopRequireDefault(_EventHistory);
@@ -101,6 +99,8 @@ var EventStream = function (_EventEmitter) {
       throw new Error("ABI is expected to be an array of field/event defs");
     }
 
+    _this.abi = abi;
+
     //web3 for setup
     var web3 = _this.web3Factory();
 
@@ -113,13 +113,13 @@ var EventStream = function (_EventEmitter) {
     _this.eventHistory = props.eventHistory || new _EventHistory2.default();
 
     //to pull current events
-    _this.eventPuller = props.eventPuller || new _ethEventPuller2.default();
+    _this.eventPuller = props.eventPuller || new _ethEventPuller.StatelessEventPuller();
 
     //utility to distribute txns with bundled events
     _this.router = new _Router2.default({ errorHandler: function errorHandler(e) {
         return _this.emit("error", e);
       } });
-    ['start', 'use', 'stop', '_handleBlockBundles'].forEach(function (fn) {
+    ['start', 'use', 'stop', 'withFunctionContext', '_handleTransactions'].forEach(function (fn) {
       return _this[fn] = _this[fn].bind(_this);
     });
     return _this;
@@ -131,6 +131,12 @@ var EventStream = function (_EventEmitter) {
       var _router;
 
       (_router = this.router).use.apply(_router, arguments);
+    }
+  }, {
+    key: 'withFunctionContext',
+    value: function withFunctionContext(include) {
+      this.fnParser = new FnContextParser(this.abi);
+      return this;
     }
 
     /**
@@ -231,8 +237,8 @@ var EventStream = function (_EventEmitter) {
                   eventName: eventName,
                   options: options,
                   contract: this.contract
-                }, function (e, bundles) {
-                  return _this2._handleBlockBundles(e, { web3: web3 }, bundles);
+                }, function (e, txns) {
+                  return _this2._handleTransactions(e, { web3: web3 }, txns);
                 });
 
               case 26:
@@ -296,17 +302,17 @@ var EventStream = function (_EventEmitter) {
                               eventName: eventName,
                               options: options,
                               contract: _this2.contract
-                            }, function (e, bundles) {
-                              if (bundles.length > 0) {
+                            }, function (e, txns) {
+                              if (txns.length > 0) {
                                 var hi = lastBlock;
-                                bundles.forEach(function (b) {
-                                  if (b.blockNumber > hi) {
-                                    hi = b.blockNumber;
+                                txns.forEach(function (t) {
+                                  if (t.blockNumber > hi) {
+                                    hi = t.blockNumber;
                                   }
                                 });
                                 lastBlock = hi;
                               }
-                              _this2._handleBlockBundles(e, { web3: web3 }, bundles);
+                              _this2._handleTransactions(e, { web3: web3 }, txns);
                             });
 
                           case 8:
@@ -391,60 +397,80 @@ var EventStream = function (_EventEmitter) {
       return stop;
     }()
   }, {
-    key: '_handleBlockBundles',
+    key: '_handleTransactions',
     value: function () {
-      var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e, ctx, bundles) {
-        var i;
+      var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(e, ctx, txns) {
+        var i, t, fullTxn, fn;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
-                if (!bundles) {
-                  _context5.next = 15;
+                if (!txns) {
+                  _context5.next = 21;
                   break;
                 }
 
-                log.debug("Getting", bundles.length, "bundles in stream callback");
+                log.debug("Getting", txns.length, "txns in stream callback");
                 i = 0;
 
               case 3:
-                if (!(i < bundles.length)) {
-                  _context5.next = 15;
+                if (!(i < txns.length)) {
+                  _context5.next = 21;
                   break;
                 }
 
-                _context5.prev = 4;
-                _context5.next = 7;
-                return this.router.process(ctx, bundles[i]);
+                t = txns[i];
 
-              case 7:
-                _context5.next = 12;
+                if (!this.fnParser) {
+                  _context5.next = 10;
+                  break;
+                }
+
+                _context5.next = 8;
+                return ctx.web3.eth.getTransaction(t.transactionHash);
+
+              case 8:
+                fullTxn = _context5.sent;
+
+                if (fullTxn) {
+                  fn = this.fnParser.parse(fullTxn.input);
+
+                  t.fnContext = fn;
+                }
+
+              case 10:
+                _context5.prev = 10;
+                _context5.next = 13;
+                return this.router.process(ctx, t);
+
+              case 13:
+                _context5.next = 18;
                 break;
 
-              case 9:
-                _context5.prev = 9;
-                _context5.t0 = _context5['catch'](4);
+              case 15:
+                _context5.prev = 15;
+                _context5.t0 = _context5['catch'](10);
 
                 log.error("Problem routing bundle", _context5.t0);
 
-              case 12:
+              case 18:
                 ++i;
                 _context5.next = 3;
                 break;
 
-              case 15:
+              case 21:
               case 'end':
                 return _context5.stop();
             }
           }
-        }, _callee5, this, [[4, 9]]);
+        }, _callee5, this, [[10, 15]]);
       }));
 
-      function _handleBlockBundles(_x4, _x5, _x6) {
+      function _handleTransactions(_x4, _x5, _x6) {
         return _ref6.apply(this, arguments);
       }
 
-      return _handleBlockBundles;
+      return _handleTransactions;
     }()
   }]);
 
@@ -628,5 +654,40 @@ var SubManager = function () {
   }]);
 
   return SubManager;
+}();
+
+var FnContextParser = function () {
+  function FnContextParser(abi) {
+    var _this5 = this;
+
+    _classCallCheck(this, FnContextParser);
+
+    this.fnSigs = {};
+    abi.forEach(function (a) {
+      if (a.type === 'function') {
+        _this5.fnSigs[a.signature] = a;
+      }
+    });
+    ['parse'].forEach(function (fn) {
+      return _this5[fn] = _this5[fn].bind(_this5);
+    });
+  }
+
+  _createClass(FnContextParser, [{
+    key: 'parse',
+    value: function parse(input) {
+      if (input && input.length > 2) {
+        var sig = input.substring(0, 10);
+        var def = this.fnSigs[sig];
+        if (def) {
+          return def.name;
+        } else {
+          return sig;
+        }
+      }
+    }
+  }]);
+
+  return FnContextParser;
 }();
 //# sourceMappingURL=EventStream.js.map

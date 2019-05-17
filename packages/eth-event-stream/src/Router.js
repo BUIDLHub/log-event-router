@@ -26,44 +26,40 @@ export default class Router {
     return this;
   }
 
-  async process(ctx, bundle) {
+  async process(ctx, txn) {
 
     ctx = {
       ...ctx,
-      bundle
+      transaction: txn
     };
 
     try {
       for(let i=0;i<this.globalHandlers.length;++i) {
         let h = this.globalHandlers[i];
+        let outTxn = null;
         if(typeof h === 'function') {
-          let outB = await h(ctx);
-          if(outB) {
-            ctx.bundle = outB;
-          }
+          outTxn = await h(ctx);
         } else if(typeof h.process === 'function') {
-          let outB = await h.process(ctx);
-          if(outB) {
-            ctx.bundle = outB;
-          }
+          outTxn = await h.process(ctx);
+        }
+        if(outTxn) {
+          ctx.transaction = outTxn;
         }
       }
-
-      let tgt = this.contextHandlers[bundle.fnContext];
-      if(tgt) {
-        for(let i=0;i<tgt.length;++i) {
-          let h = tgt[i];
-          if(typeof h === 'function') {
-            let outB = await h(ctx);
-            if(outB) {
-              ctx.bundle = outB;
-            }
-          } else if(typeof h.process === 'function') {
-            let outB = await h.process(ctx);
-            if(outB) {
-              ctx.bundle = outB;
+      let fnCtx = ctx.transaction.fnContext;
+      if(fnCtx) {
+        let tgt = this.contextHandlers[fnCtx];
+        if(tgt) {
+          for(let i=0;i<tgt.length;++i) {
+            let h = tgt[i];
+            let outTxn = null;
+            if(typeof h === 'function') {
+              outTxn = await h(ctx);
+            } else if(typeof h.process === 'function') {
+              outTxn = await h.process(ctx);
             }
           }
+          ctx.transaction = outTxn;
         }
       }
 

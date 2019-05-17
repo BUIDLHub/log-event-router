@@ -18,7 +18,7 @@
     "url": "git+https://github.com/buidlhub/log-event-router.git"
   },
   "scripts": {
-    "test": "DEBUG=EventPuller:* mocha --require babel-core/register --require babel-polyfill $(find ./src -name *.test.js)",
+    "test": "DEBUG=StatefulEventPuller:*,StatelessEventPuller:* mocha --require babel-core/register --require babel-polyfill $(find ./src -name *.test.js)",
     "prepare": "babel ./src --out-dir ./dist --ignore '**/*.test.js' --source-maps --copy-files",
     "build": "npm run prepare"
   },

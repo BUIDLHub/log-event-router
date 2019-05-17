@@ -50,6 +50,7 @@ var EthBlock = function () {
         log.debug("Creating event bundle for hash", hash);
         bundle = new EventBundle({
           transactionHash: hash,
+          transactionIndex: evt.transactionIndex,
           blockNumber: this.number,
           timestamp: this.timestamp
         });
@@ -58,7 +59,7 @@ var EthBlock = function () {
       bundle.addEvent(evt);
     }
   }, {
-    key: 'bundles',
+    key: 'transactions',
     get: function get() {
       return _lodash2.default.values(this._byHash);
     }
@@ -81,11 +82,12 @@ var EventBundle = function () {
     _classCallCheck(this, EventBundle);
 
     this.transactionHash = props.transactionHash;
+    this.transactionIndex = props.transactionIndex;
     this.blockNumber = props.blockNumber;
     this.timestamp = props.timestamp;
 
-    this._events = [];
-    this._byName = {};
+    this.allEvents = [];
+    this.logEvents = {};
     ['addEvent'].forEach(function (fn) {
       return _this2[fn] = _this2[fn].bind(_this2);
     });
@@ -94,35 +96,16 @@ var EventBundle = function () {
   _createClass(EventBundle, [{
     key: 'addEvent',
     value: function addEvent(evt) {
-      this._events.push(evt);
-      var ex = this._byName[evt.event];
-      if (ex) {
-        log.debug("Event with name", evt.event, "matches existing item with same name");
-        if (!Array.isArray(ex)) {
-          var a = [ex, evt];
-          this._byName[evt.event] = a;
-        } else {
-          ex.push(evt);
-        }
-      } else {
-        log.debug("Storing event with name", evt.event);
-        this._byName[evt.event] = evt;
-      }
-    }
-  }, {
-    key: 'length',
-    get: function get() {
-      return this._events.length;
-    }
-  }, {
-    key: 'allEvents',
-    get: function get() {
-      return this._events;
-    }
-  }, {
-    key: 'byName',
-    get: function get() {
-      return _extends({}, this._byName);
+      this.allEvents.push(evt);
+      this.allEvents.sort(function (a, b) {
+        return a.logIndex - b.logIndex;
+      });
+      var a = this.logEvents[evt.event] || [];
+      a.push(evt);
+      a.sort(function (a, b) {
+        return a.logIndex - b.logIndex;
+      });
+      this.logEvents[evt.event] = a;
     }
   }]);
 

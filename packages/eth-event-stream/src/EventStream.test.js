@@ -20,7 +20,7 @@ class MockContract {
     for(let i=start;i<=end;++i) {
       let block = this._eth.blocks[i];
       if(block) {
-        block.bundles.forEach(b=>{
+        block.transactions.forEach(b=>{
           all = [
             ...all,
             ...b.allEvents
@@ -106,7 +106,7 @@ describe("EventStream", ()=>{
     eth._addBlock(block);
 
     stream.use((ctx)=>{
-      console.log("Bundle", ctx.bundle);
+      console.log("Bundle", ctx.transaction);
     });
 
     stream.start({

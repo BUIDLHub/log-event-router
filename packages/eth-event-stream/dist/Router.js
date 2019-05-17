@@ -52,8 +52,8 @@ var Router = function () {
   }, {
     key: 'process',
     value: function () {
-      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(ctx, bundle) {
-        var i, h, outB, _outB, tgt, _i, _h, _outB2, _outB3;
+      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(ctx, txn) {
+        var i, h, _outTxn, fnCtx, tgt, _i, _h, _outTxn2;
 
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -61,7 +61,7 @@ var Router = function () {
               case 0:
 
                 ctx = _extends({}, ctx, {
-                  bundle: bundle
+                  transaction: txn
                 });
 
                 _context.prev = 1;
@@ -74,27 +74,24 @@ var Router = function () {
                 }
 
                 h = this.globalHandlers[i];
+                _outTxn = null;
 
                 if (!(typeof h === 'function')) {
                   _context.next = 12;
                   break;
                 }
 
-                _context.next = 8;
+                _context.next = 9;
                 return h(ctx);
 
-              case 8:
-                outB = _context.sent;
-
-                if (outB) {
-                  ctx.bundle = outB;
-                }
-                _context.next = 17;
+              case 9:
+                _outTxn = _context.sent;
+                _context.next = 16;
                 break;
 
               case 12:
                 if (!(typeof h.process === 'function')) {
-                  _context.next = 17;
+                  _context.next = 16;
                   break;
                 }
 
@@ -102,10 +99,11 @@ var Router = function () {
                 return h.process(ctx);
 
               case 15:
-                _outB = _context.sent;
+                _outTxn = _context.sent;
 
-                if (_outB) {
-                  ctx.bundle = _outB;
+              case 16:
+                if (_outTxn) {
+                  ctx.transaction = _outTxn;
                 }
 
               case 17:
@@ -114,79 +112,82 @@ var Router = function () {
                 break;
 
               case 20:
-                tgt = this.contextHandlers[bundle.fnContext];
+                fnCtx = ctx.transaction.fnContext;
+
+                if (!fnCtx) {
+                  _context.next = 42;
+                  break;
+                }
+
+                tgt = this.contextHandlers[fnCtx];
 
                 if (!tgt) {
-                  _context.next = 40;
+                  _context.next = 42;
                   break;
                 }
 
                 _i = 0;
 
-              case 23:
+              case 25:
                 if (!(_i < tgt.length)) {
-                  _context.next = 40;
+                  _context.next = 41;
                   break;
                 }
 
                 _h = tgt[_i];
+                _outTxn2 = null;
 
                 if (!(typeof _h === 'function')) {
-                  _context.next = 32;
+                  _context.next = 34;
                   break;
                 }
 
-                _context.next = 28;
+                _context.next = 31;
                 return _h(ctx);
 
-              case 28:
-                _outB2 = _context.sent;
-
-                if (_outB2) {
-                  ctx.bundle = _outB2;
-                }
-                _context.next = 37;
+              case 31:
+                _outTxn2 = _context.sent;
+                _context.next = 38;
                 break;
 
-              case 32:
+              case 34:
                 if (!(typeof _h.process === 'function')) {
-                  _context.next = 37;
+                  _context.next = 38;
                   break;
                 }
 
-                _context.next = 35;
+                _context.next = 37;
                 return _h.process(ctx);
 
-              case 35:
-                _outB3 = _context.sent;
-
-                if (_outB3) {
-                  ctx.bundle = _outB3;
-                }
-
               case 37:
+                _outTxn2 = _context.sent;
+
+              case 38:
                 ++_i;
-                _context.next = 23;
+                _context.next = 25;
                 break;
 
-              case 40:
-                _context.next = 45;
-                break;
+              case 41:
+                ctx.transaction = outTxn;
 
               case 42:
-                _context.prev = 42;
+                _context.next = 47;
+                break;
+
+              case 44:
+                _context.prev = 44;
                 _context.t0 = _context['catch'](1);
 
                 if (this.errorHandler) {
                   this.errorHandler(_context.t0);
                 }
 
-              case 45:
+              case 47:
               case 'end':
                 return _context.stop();
             }
           }
-        }, _callee, this, [[1, 42]]);
+        }, _callee, this, [[1, 44]]);
       }));
 
       function process(_x, _x2) {

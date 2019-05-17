@@ -1,4 +1,4 @@
-import EventPuller from 'eth-event-puller';
+import {StatelessEventPuller as Puller} from 'eth-event-puller';
 import Log from 'stream-logger';
 
 const log = new Log({component: "EventHistory"});
@@ -7,7 +7,7 @@ export default class EventHistory {
   constructor(props) {
     this.puller = props?props.eventPuller:undefined;
     if(!this.puller) {
-      this.puller = new EventPuller();
+      this.puller = new Puller();
     }
 
     [

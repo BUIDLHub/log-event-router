@@ -1,4 +1,5 @@
 import EthBlock from './';
+import _ from 'lodash';
 
 describe("EthBlock", ()=>{
   it("Should properly organize events", done=>{
@@ -28,25 +29,19 @@ describe("EthBlock", ()=>{
       }
     });
 
-    let bundles = block.bundles;
-    if(bundles.length !== 2){
-      done("Expected 2 bundles but found " + bundles.length);
+    let txns = block.transactions;
+    if(txns.length !== 2){
+      done("Expected 2 txns but found " + txns.length);
     }
-    for(let i=0;i<bundles.length;++i) {
-      let b = bundles[i];
-      if(b.transactionHash === 'hash1') {
-        if(b.allEvents.length !== 2) {
-          return done("Expected 2 events in first bundle: " + b.allEvents.length);
-        }
-        if(b.length !== 2) {
-          return done("Length is invalid for bundle: " + b.length + " != 2");
+    for(let i=0;i<txns.length;++i) {
+      let t = txns[i];
+      if(t.transactionHash === 'hash1') {
+        if(t.allEvents.length !== 2) {
+          return done("Expected 2 events in first txn: " + t.allEvents.length);
         }
       } else {
-        if(b.allEvents.length !== 1) {
-          return done("Expected 1 event in second bundle: " + b.allEvents.length);
-        }
-        if(b.length !== 1) {
-          return done("Length is invalid 1-item bundle: " + b.length);
+        if(t.allEvents.length !== 1) {
+          return done("Expected 1 event in second bundle: " + t.allEvents.length);
         }
       }
     }

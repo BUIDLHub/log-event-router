@@ -8,8 +8,6 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 var _ethEventPuller = require('eth-event-puller');
 
-var _ethEventPuller2 = _interopRequireDefault(_ethEventPuller);
-
 var _streamLogger = require('stream-logger');
 
 var _streamLogger2 = _interopRequireDefault(_streamLogger);
@@ -28,7 +26,7 @@ var EventHistory = function () {
 
     this.puller = props ? props.eventPuller : undefined;
     if (!this.puller) {
-      this.puller = new _ethEventPuller2.default();
+      this.puller = new _ethEventPuller.StatelessEventPuller();
     }
 
     ['recoverEvents'].forEach(function (fn) {

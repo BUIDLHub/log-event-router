@@ -88,9 +88,9 @@ class KittyAppStateStore {
       }
     }
 
-    const bundle = ctx.bundle;
-    if (! bundle) {
-      console.log("WARNING: NO BUNDLE DETECTED", ctx);
+    const txn = ctx.transaction;
+    if (! txn) {
+      console.log("WARNING: NO TXN DETECTED", ctx);
       return;
     }
 
@@ -98,10 +98,10 @@ class KittyAppStateStore {
       // blockNumber,
       transactionIndex,
       transactionHash
-    } = bundle;
+    } = txn;
 
     // FIXME
-    const blockNumber = bundle.blockNumber - this.getConfig('lag');
+    const blockNumber = txn.blockNumber - this.getConfig('lag');
 
     // protect against re-processing blocks when resuming from snapshot
     if (this.state.blockchain.currentBlock && this.state.blockchain.currentBlock > blockNumber) {

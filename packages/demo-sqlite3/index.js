@@ -124,17 +124,17 @@ const main = async () => {
   });
 
   const eventLogger = async (ctx) => {
-    let bundle = ctx.bundle;
-    //let txn = ctx.txn;
-    const {blockNumber} = bundle;
+    let txn = ctx.transaction;
+    const {blockNumber} = txn;
     console.log({blockNumber});
   };
 
   const eventRecorder = async (ctx) => {
-    let bundle = ctx.bundle;
+    let txn = ctx.transaction;
 
-    const transferEvent = bundle.byName['Transfer'];
-    if (transferEvent) {
+    const transferEvents = txn.logEvents['Transfer'];
+    if (transferEvents) {
+      let transferEvent = transferEvents[0];
       await recordTransfer.runAsync(
         transferEvent.returnValues.from,
         transferEvent.returnValues.to,
@@ -147,8 +147,9 @@ const main = async () => {
       );
     }
 
-    const approvalEvent = bundle.byName['Approval'];
-    if (approvalEvent) {
+    const approvalEvents = txn.logEvents['Approval'];
+    if (approvalEvents) {
+      let approvalEvent = approvalEvents[0];
       await recordApproval.runAsync(
         approvalEvent.returnValues.tokenOwner,
         approvalEvent.returnValues.spender,
@@ -161,7 +162,7 @@ const main = async () => {
       );
     }
 
-    await recordSetting.runAsync("last_block", bundle.blockNumber);
+    await recordSetting.runAsync("last_block", txn.blockNumber);
   };
 
   //stream.use(storageMiddleware());

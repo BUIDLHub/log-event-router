@@ -14,7 +14,7 @@ export default class EthBlock {
     ].forEach(fn=>this[fn]=this[fn].bind(this));
   }
 
-  get bundles() {
+  get transactions() {
     return _.values(this._byHash);
   }
 
@@ -35,6 +35,7 @@ export default class EthBlock {
       log.debug("Creating event bundle for hash", hash);
       bundle = new EventBundle({
         transactionHash: hash,
+        transactionIndex: evt.transactionIndex,
         blockNumber: this.number,
         timestamp: this.timestamp
       });
@@ -47,44 +48,24 @@ export default class EthBlock {
 class EventBundle {
   constructor(props) {
     this.transactionHash = props.transactionHash;
+    this.transactionIndex = props.transactionIndex;
     this.blockNumber = props.blockNumber;
     this.timestamp = props.timestamp;
 
-    this._events = [];
-    this._byName = {};
+    this.allEvents = [];
+    this.logEvents = {};
     [
       'addEvent'
     ].forEach(fn=>this[fn]=this[fn].bind(this));
   }
 
   addEvent(evt) {
-    this._events.push(evt);
-    let ex = this._byName[evt.event];
-    if(ex) {
-      log.debug("Event with name", evt.event, "matches existing item with same name");
-      if(!Array.isArray(ex)) {
-        let a = [ex, evt];
-        this._byName[evt.event] = a;
-      } else {
-        ex.push(evt);
-      }
-    } else {
-      log.debug("Storing event with name", evt.event);
-      this._byName[evt.event] = evt;
-    }
+    this.allEvents.push(evt);
+    this.allEvents.sort((a,b)=>a.logIndex-b.logIndex);
+    let a = this.logEvents[evt.event] || [];
+    a.push(evt);
+    a.sort((a,b)=>a.logIndex-b.logIndex);
+    this.logEvents[evt.event] = a;
   }
 
-  get length() {
-    return this._events.length;
-  }
-
-  get allEvents() {
-    return this._events;
-  }
-
-  get byName() {
-    return {
-      ...this._byName
-    }
-  }
 }

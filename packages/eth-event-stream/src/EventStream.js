@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import Puller from 'eth-event-puller';
+import {StatelessEventPuller as Puller} from 'eth-event-puller';
 import EventHistory from './EventHistory';
 import Router from './Router';
 import * as yup from 'yup';
@@ -37,6 +37,8 @@ export default class EventStream extends EventEmitter {
       throw new Error("ABI is expected to be an array of field/event defs");
     }
 
+    this.abi = abi;
+
     //web3 for setup
     let web3 = this.web3Factory();
 
@@ -57,12 +59,18 @@ export default class EventStream extends EventEmitter {
       'start',
       'use',
       'stop',
-      '_handleBlockBundles'
+      'withFunctionContext',
+      '_handleTransactions'
     ].forEach(fn=>this[fn]=this[fn].bind(this));
   }
 
   use() {
     this.router.use(...arguments);
+  }
+
+  withFunctionContext(include) {
+    this.fnParser = new FnContextParser(this.abi);
+    return this;
   }
 
   /**
@@ -122,7 +130,7 @@ export default class EventStream extends EventEmitter {
         eventName,
         options,
         contract: this.contract
-      }, (e, bundles)=>this._handleBlockBundles(e, {web3}, bundles));
+      }, (e, txns)=>this._handleTransactions(e, {web3}, txns));
 
       log.info("Finished recovering batch of events...");
 
@@ -157,17 +165,17 @@ export default class EventStream extends EventEmitter {
               eventName,
               options,
               contract: this.contract
-            }, (e, bundles)=>{
-              if(bundles.length > 0) {
+            }, (e, txns)=>{
+              if(txns.length > 0) {
                 let hi = lastBlock;
-                bundles.forEach(b=>{
-                  if(b.blockNumber > hi) {
-                    hi = b.blockNumber;
+                txns.forEach(t=>{
+                  if(t.blockNumber > hi) {
+                    hi = t.blockNumber;
                   }
                 });
                 lastBlock = hi;
               }
-              this._handleBlockBundles(e, {web3}, bundles)
+              this._handleTransactions(e, {web3}, txns)
             });
           }
         } catch (er) {
@@ -195,12 +203,22 @@ export default class EventStream extends EventEmitter {
     }
   }
 
-  async _handleBlockBundles(e, ctx, bundles) {
-    if(bundles) {
-      log.debug("Getting",bundles.length,"bundles in stream callback");
-      for(let i=0;i<bundles.length;++i) {
+  async _handleTransactions(e, ctx, txns) {
+    if(txns) {
+      log.debug("Getting",txns.length,"txns in stream callback");
+      for(let i=0;i<txns.length;++i) {
+        let t = txns[i];
+
+        if(this.fnParser) {
+          let fullTxn = await ctx.web3.eth.getTransaction(t.transactionHash);
+          if(fullTxn) {
+            let fn = this.fnParser.parse(fullTxn.input);
+            t.fnContext = fn;
+          }
+        }
+
         try {
-          await this.router.process(ctx, bundles[i]);
+          await this.router.process(ctx, t);
         } catch (e) {
           log.error("Problem routing bundle", e);
         }
@@ -291,5 +309,31 @@ class SubManager {
         await poll()
       }
     }, POLL_PERIOD);
+  }
+}
+
+class FnContextParser {
+  constructor(abi) {
+    this.fnSigs = {};
+    abi.forEach(a=>{
+      if(a.type === 'function') {
+        this.fnSigs[a.signature] = a;
+      }
+    });
+    [
+      'parse'
+    ].forEach(fn=>this[fn]=this[fn].bind(this));
+  }
+
+  parse(input) {
+    if(input && input.length > 2) {
+      let sig = input.substring(0, 10);
+      let def = this.fnSigs[sig];
+      if(def) {
+        return def.name;
+      } else {
+        return sig;
+      }
+    }
   }
 }

@@ -13,10 +13,6 @@ const {
   storageInstance
 } = require("event-storage");
 
-const BHubHistory = require("bhub-history-puller").default;
-const TxnBundler = require("eth-txn-bundler").default;
-const FnContext = require("eth-fn-context").default;
-
 const NETWORK = 'mainnet';
 const RPC_ENDPOINT = process.env.RPC_ENDPOINT;
 const BASE_ABI_URL = "https://api.etherscan.io/api?module=contract&action=getabi&address=";
@@ -57,18 +53,13 @@ const main = async () => {
     abi,
     address: CONTRACT,
     web3Factory
-  });
+  }).withFunctionContext(true);
 
-  //stream.use(new TxnBundler());
-  //stream.use(new FnContext({abi}));
   stream.use(storageMiddleware());
 
   const eventLogger = async (ctx) => {
-    let bundle = ctx.bundle;
-    let txn = bundle.txn;
+    let txn = ctx.transaction;
     if(!txn) {
-      console.log("Received", bundle.length, "events in block", bundle.blockNumber);
-      //console.log("Events", JSON.stringify(bundle.allEvents, null, 2));
       return;
     }
 
@@ -83,10 +74,10 @@ const main = async () => {
       });
     }
 
-    let events = bundle.allEvents;
+    let events = txn.allEvents;
     console.log('received',events.length,'events in block',
                 txn.blockNumber+"."+txn.transactionIndex,
-                "with context",bundle.fnContext);
+                "with context",txn.fnContext);
 
   }
 
