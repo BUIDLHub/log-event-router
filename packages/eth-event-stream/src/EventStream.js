@@ -6,6 +6,9 @@ import * as yup from 'yup';
 import Log from 'stream-logger';
 import _ from 'lodash';
 
+export const RECOVERY_START = "recovery_start";
+export const RECOVERY_END = "recovery_end";
+
 const schema = yup.object().shape({
   web3Factory: yup.object().required("Missing event stream web3 factory function"),
   address: yup.string().required("Missing contract address for event stream")
@@ -121,6 +124,8 @@ export default class EventStream extends EventEmitter {
     log.debug("Scanning blocks", start,"-",latest);
     let s = Date.now();
 
+    this.emit(RECOVERY_START, {fromBlock: start,toBlock: latest});
+
     //while there is a gap in block scanning
     while(span > 0) {
       //pull all events for the span
@@ -148,6 +153,8 @@ export default class EventStream extends EventEmitter {
 
     log.info("Finished recovering past events in", (Date.now()-s),"ms");
     let lastBlock = latest;
+
+    this.emit(RECOVERY_END, {fromBlock: start,toBlock: latest});
 
     let subHandler = async (block)=>{
       if(block) {

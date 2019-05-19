@@ -1,5 +1,7 @@
-import {default as EventStream} from './EventStream';
+import {default as EventStream, RECOVERY_END, RECOVERY_START} from './EventStream';
 
 module.exports =  {
-  EventStream
+  EventStream,
+  RECOVERY_END,
+  RECOVERY_START
 }

@@ -36,7 +36,7 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 
 (0, _localforageSetitems.extendPrototype)(_localforage2.default);
 
-var canStoreInLN = function canStoreInLN() {
+var canStoreInLS = function canStoreInLS() {
   try {
 
     localStorage.setItem("__test", "true");
@@ -61,22 +61,27 @@ var localStorageValid = function localStorageValid() {
 
 var dbFactory = function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(props) {
-    var db;
+    var canStore, lfProps, db;
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
-            _context.next = 2;
-            return _localforage2.default.createInstance({
-              name: props.name,
-              driver: "localFSDriver"
-            });
+            canStore = canStoreInLS();
+            lfProps = {
+              name: props.name
+            };
 
-          case 2:
+            if (!canStoreInLS()) {
+              lfProps.driver = "localFSDriver";
+            }
+            _context.next = 5;
+            return _localforage2.default.createInstance(lfProps);
+
+          case 5:
             db = _context.sent;
             return _context.abrupt('return', db);
 
-          case 4:
+          case 7:
           case 'end':
             return _context.stop();
         }

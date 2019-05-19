@@ -15,7 +15,7 @@ import LocalFS from "./LocalFSStorage";
 
 extendPrototype(localforage);
 
-const canStoreInLN = () => {
+const canStoreInLS = () => {
   try {
 
     localStorage.setItem("__test", "true");
@@ -41,10 +41,14 @@ const localStorageValid = () => {
 }
 
 const dbFactory = async props => {
-  var db = await localforage.createInstance({
-    name: props.name,
-    driver: "localFSDriver"
-  });
+  let canStore = canStoreInLS();
+  let lfProps = {
+    name: props.name
+  };
+  if(!canStoreInLS()) {
+    lfProps.driver = "localFSDriver";
+  }
+  var db = await localforage.createInstance(lfProps);
   return db;
 }
 

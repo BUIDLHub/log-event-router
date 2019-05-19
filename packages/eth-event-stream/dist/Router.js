@@ -53,7 +53,7 @@ var Router = function () {
     key: 'process',
     value: function () {
       var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(ctx, txn) {
-        var i, h, _outTxn, fnCtx, tgt, _i, _h, _outTxn2;
+        var i, h, outTxn, fnCtx, tgt, _i, _h, _outTxn;
 
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -74,7 +74,7 @@ var Router = function () {
                 }
 
                 h = this.globalHandlers[i];
-                _outTxn = null;
+                outTxn = null;
 
                 if (!(typeof h === 'function')) {
                   _context.next = 12;
@@ -85,7 +85,7 @@ var Router = function () {
                 return h(ctx);
 
               case 9:
-                _outTxn = _context.sent;
+                outTxn = _context.sent;
                 _context.next = 16;
                 break;
 
@@ -99,11 +99,11 @@ var Router = function () {
                 return h.process(ctx);
 
               case 15:
-                _outTxn = _context.sent;
+                outTxn = _context.sent;
 
               case 16:
-                if (_outTxn) {
-                  ctx.transaction = _outTxn;
+                if (outTxn) {
+                  ctx.transaction = outTxn;
                 }
 
               case 17:
@@ -130,12 +130,12 @@ var Router = function () {
 
               case 25:
                 if (!(_i < tgt.length)) {
-                  _context.next = 41;
+                  _context.next = 42;
                   break;
                 }
 
                 _h = tgt[_i];
-                _outTxn2 = null;
+                _outTxn = null;
 
                 if (!(typeof _h === 'function')) {
                   _context.next = 34;
@@ -146,7 +146,7 @@ var Router = function () {
                 return _h(ctx);
 
               case 31:
-                _outTxn2 = _context.sent;
+                _outTxn = _context.sent;
                 _context.next = 38;
                 break;
 
@@ -160,15 +160,17 @@ var Router = function () {
                 return _h.process(ctx);
 
               case 37:
-                _outTxn2 = _context.sent;
+                _outTxn = _context.sent;
 
               case 38:
+                if (_outTxn) {
+                  ctx.transaction = _outTxn;
+                }
+
+              case 39:
                 ++_i;
                 _context.next = 25;
                 break;
-
-              case 41:
-                ctx.transaction = outTxn;
 
               case 42:
                 _context.next = 47;

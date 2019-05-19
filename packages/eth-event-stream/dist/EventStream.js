@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.RECOVERY_END = exports.RECOVERY_START = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -43,6 +44,9 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+var RECOVERY_START = exports.RECOVERY_START = "recovery_start";
+var RECOVERY_END = exports.RECOVERY_END = "recovery_end";
 
 var schema = yup.object().shape({
   web3Factory: yup.object().required("Missing event stream web3 factory function"),
@@ -222,15 +226,18 @@ var EventStream = function (_EventEmitter) {
                 log.debug("Scanning blocks", start, "-", latest);
                 s = Date.now();
 
+
+                this.emit(RECOVERY_START, { fromBlock: start, toBlock: latest });
+
                 //while there is a gap in block scanning
 
-              case 23:
+              case 24:
                 if (!(span > 0)) {
-                  _context3.next = 36;
+                  _context3.next = 37;
                   break;
                 }
 
-                _context3.next = 26;
+                _context3.next = 27;
                 return this.eventHistory.recoverEvents({
                   fromBlock: start,
                   toBlock: latest,
@@ -241,7 +248,7 @@ var EventStream = function (_EventEmitter) {
                   return _this2._handleTransactions(e, { web3: web3 }, txns);
                 });
 
-              case 26:
+              case 27:
 
                 log.info("Finished recovering batch of events...");
 
@@ -249,10 +256,10 @@ var EventStream = function (_EventEmitter) {
                 start = latest + 1;
 
                 //grab the latest right now
-                _context3.next = 30;
+                _context3.next = 31;
                 return web3.eth.getBlockNumber();
 
-              case 30:
+              case 31:
                 latest = _context3.sent;
 
                 latest -= lag;
@@ -260,13 +267,16 @@ var EventStream = function (_EventEmitter) {
                 //compute new span
                 span = latest - start;
                 log.info("New end block is", latest, "and new span is", span);
-                _context3.next = 23;
+                _context3.next = 24;
                 break;
 
-              case 36:
+              case 37:
 
                 log.info("Finished recovering past events in", Date.now() - s, "ms");
                 lastBlock = latest;
+
+
+                this.emit(RECOVERY_END, { fromBlock: start, toBlock: latest });
 
                 subHandler = function () {
                   var _ref4 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(block) {
@@ -349,7 +359,7 @@ var EventStream = function (_EventEmitter) {
                 //new block
                 this.sub.start();
 
-              case 41:
+              case 43:
               case 'end':
                 return _context3.stop();
             }

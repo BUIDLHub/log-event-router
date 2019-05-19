@@ -58,8 +58,10 @@ export default class Router {
             } else if(typeof h.process === 'function') {
               outTxn = await h.process(ctx);
             }
+            if(outTxn) {
+              ctx.transaction = outTxn;
+            }
           }
-          ctx.transaction = outTxn;
         }
       }
 

@@ -31,10 +31,27 @@ const fail = (state=INIT, action) => {
   }
 }
 
+const recoveryStart = (state=INIT) => {
+  return {
+    ...state,
+    loading: true,
+    error: null
+  }
+}
+
+const recoveryFinished = (state=INIT) => {
+  return {
+    ...state,
+    loading: false
+  }
+}
+
 const HANDLERS = {
   [Types.INIT_START]: start,
   [Types.INIT_SUCCESS]: success,
-  [Types.FAILURE]: fail
+  [Types.FAILURE]: fail,
+  [Types.RECOVERY_START]: recoveryStart,
+  [Types.RECOVERY_FINISHED]: recoveryFinished
 }
 
 export default createReducer(INIT, HANDLERS);
