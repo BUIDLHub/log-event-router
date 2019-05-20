@@ -6,7 +6,10 @@ const {
   EventStream
 } = require('eth-event-stream');
 
-const ipfs = new IPFS();
+const node = new IPFS();
+node.once('ready', () => {
+  console.log('ipfs ready...');
+});
 
 const NETWORK = 'mainnet';
 
@@ -158,11 +161,11 @@ function updateView() {
 
 
 const paintBlocks = async (ctx) => {
-  const bundle = ctx.bundle;
+  const transaction = ctx.transaction;
 
   const {
     blockNumber
-  } = bundle;
+  } = transaction;
 
   session.currentBlock = blockNumber;
 
@@ -182,11 +185,11 @@ const main = async (rootElement, initialState, ipfsHash) => {
     kittyAppStateStore.loadState(initialState);
   } else if (ipfsHash) {
     console.log('fetching ' + ipfsHash);
-    const ipfsData = await ipfs.cat(ipfsHash);
-    console.log('data', ipfsData);
-    const ipfsText = new TextDecoder().decode(ipfsData);
-    console.log('decoded', ipfsText);
-    return;
+    const ipfsData = await node.cat(ipfsHash);
+    const ipfsText = ipfsData.toString();
+    const ipfsState = JSON.parse(ipfsText);
+    console.log('setting state to ', ipfsState);
+    kittyAppStateStore.loadState(ipfsState);
   }
 
   const abi = await kittyAppStateStore.getABI();
@@ -222,7 +225,8 @@ const main = async (rootElement, initialState, ipfsHash) => {
 
   const latest = await web3.eth.getBlockNumber();
 
-  const fromBlock = lastProcessedBlock || (latest - 4000);
+  // FIXME: this seems confusing
+  const fromBlock = lastProcessedBlock || (latest - (2000+lag));
 
   session = {
       startingBlock: fromBlock,
@@ -232,12 +236,15 @@ const main = async (rootElement, initialState, ipfsHash) => {
 
   console.log({currentState, lastProcessedBlock, latest, fromBlock});
 
+  rootElement.classList.add('grayscale');
+
   stream.start({
     fromBlock,
     lag /* TODO: what would happen if our clients didn't match wrt lag? */
   }).then((data) => {
     session.syncDelay = Date.now() - session.startingTime;
     updateView();
+    rootElement.classList.remove('grayscale');
   });
 
   // TODO: we can remove this after we can listen for updates from EventStream

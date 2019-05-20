@@ -24,9 +24,12 @@ const generateIpfsSnapshot = async () => {
   }
   const currentState = kittyAppStateStore.exportState();
 
-  const buffer = Buffer.from(JSON.stringify(currentState));
+  const buffer = IPFS.Buffer.from(currentState);
 
-  const ipfsData = await node.add(buffer);
+  const ipfsData = await node.add({
+    path:'data.json',
+    content: buffer
+  });
 
   console.log("***************************************************************");
   console.log('')
@@ -59,18 +62,21 @@ const main = async (initialState) => {
 
   const web3 = web3Factory();
 
+  // FIXME: passing lag here maybe should throw an error???
   const stream = new EventStream({
     abi,
     address,
+    lag,
     web3Factory
   });
   stream.use(kittyAppStateStore.handleEvent);
 
   const latest = await web3.eth.getBlockNumber();
-  const start = latest - 50;
+  const start = latest - (2000+lag);
 
   stream.start({
-    fromBlock: start
+    fromBlock: start,
+    lag
   }).then(() => {
     session.isEventStreamSynced = true;
     generateIpfsSnapshot();

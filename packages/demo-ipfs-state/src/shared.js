@@ -10,7 +10,9 @@ class KittyAppStateStore {
   constructor() {
     this.session = {};
     this.exportState = this.exportState.bind(this);
+    this.loadState = this.loadState.bind(this);
     this.handleEvent = this.handleEvent.bind(this);
+    this.getConfig = this.getConfig.bind(this);
     this.initializeState();
   }
 
@@ -36,6 +38,16 @@ class KittyAppStateStore {
     return abi;
   }
 
+  _getBoxPosition(transactionHash) {
+    //very simple hashing function
+     var hash = 0;
+     for (var i = 0; i < transactionHash.length; i++) {
+         var charCode = transactionHash.charCodeAt(i);
+         hash += charCode;
+     }
+     return hash % this.getConfig('maxBoxes');
+  }
+
   async getABI() {
     if (! this.session.abi) {
       this.session.abi = await this._fetchABI(CONTRACT);
@@ -51,7 +63,7 @@ class KittyAppStateStore {
         // startingTime: Date.now(),
         // latestBlock: latest
       },
-      currentBlockIndex: -1,
+      currentBlockIndex: 0,
       boxState: [],
       config: {
         contractAddress: CONTRACT,
@@ -62,6 +74,9 @@ class KittyAppStateStore {
   }
 
   loadState(newState) {
+    if (typeof newState !== 'object') {
+      throw new Error("state mst be a object");
+    }
     console.log('setting state to ', newState);
     this.state = newState;
   }
@@ -95,6 +110,7 @@ class KittyAppStateStore {
     }
 
     const {
+      allEvents,
       // blockNumber,
       transactionIndex,
       transactionHash
@@ -107,21 +123,15 @@ class KittyAppStateStore {
     if (this.state.blockchain.currentBlock && this.state.blockchain.currentBlock > blockNumber) {
       return;
     }
+
+    // reset current transaction index for new block
     if (this.state.blockchain.currentBlock != blockNumber) {
       this.state.blockchain.currentTransaction = 0;
     }
 
     this.state.blockchain.currentBlock = blockNumber;
 
-    let birthEvents = bundle.byName['Birth'];
-    // TODO: this error logic seems awkward
-    if (! birthEvents) {
-      return;
-    }
-
-    if (! Array.isArray(birthEvents)) {
-      birthEvents = [birthEvents];
-    }
+    const birthEvents = allEvents.filter(it => it.event === 'Birth');
 
     birthEvents.forEach((birthEvent) => {
       const { transactionIndex } = birthEvent;
@@ -145,9 +155,9 @@ class KittyAppStateStore {
         kittyId
       };
 
-      const currentBlockIndex = (this.state.currentBlockIndex + 1) % this.state.config.maxBoxes;
-      this.state.currentBlockIndex = currentBlockIndex;
-      this.state.boxState[currentBlockIndex] = boxState;
+      const boxIndex = this._getBoxPosition(transactionHash);
+      this.state.boxState[boxIndex] = boxState;
+      this.state.currentBlockIndex = boxIndex;
 
     })
 
