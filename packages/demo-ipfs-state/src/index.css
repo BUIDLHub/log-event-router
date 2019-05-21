@@ -1,0 +1,78 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.flex-grid {
+  display: flex;
+}
+.col {
+  flex: 1;
+}
+
+header {
+  margin: 10px;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.grayscale {
+  filter: grayscale(90%);
+}
+
+.initial-state, .current-state {
+  width: 90%;
+  height: 80vh;
+}
+.current-state {
+  overflow: scroll;
+}
+
+.kitty-app {
+  width: 650px;
+}
+
+.flex-container {
+  /* We first create a flex layout context */
+  display: flex;
+
+  /* Then we define the flow direction
+     and if we allow the items to wrap
+   * Remember this is the same as:
+   * flex-direction: row;
+   * flex-wrap: wrap;
+   */
+  flex-flow: row wrap;
+
+  /* Then we define how is distributed the remaining space */
+  justify-content: space-around;
+}
+
+.flex-item {
+  padding: 5px;
+  width: 200px;
+  height: 200px;
+  margin-top: 10px;
+  color: black;
+  font-weight: bold;
+  text-align: center;
+}
+
+.box img {
+  display: inline-block;
+  height: 80%;
+  opacity: .85;
+}
+
+.box p {
+}
+
+.box.current {
+  outline: 3px solid tomato;
+}

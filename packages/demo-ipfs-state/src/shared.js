@@ -9,13 +9,25 @@ class KittyAppStateStore {
 
   constructor() {
     this.session = {};
+    this.callbacks = [];
     this.exportState = this.exportState.bind(this);
     this.loadState = this.loadState.bind(this);
     this.handleEvent = this.handleEvent.bind(this);
     this.getConfig = this.getConfig.bind(this);
+    this._invokeSubscribers = this._invokeSubscribers.bind(this);
+    this.subscribe = this.subscribe.bind(this);
     this.initializeState();
   }
 
+  subscribe(callback) {
+    this.callbacks.push(callback);
+  }
+
+  _invokeSubscribers() {
+    this.callbacks.forEach((callback) => {
+      callback.apply();
+    })
+  }
 
   async _fetchABI(address) {
     let abiUrl = BASE_ABI_URL + CONTRACT;
@@ -58,12 +70,9 @@ class KittyAppStateStore {
   initializeState() {
     this.state = {
       blockchain: {
-        network: 'mainnet',
-        // startingBlock: start,
-        // startingTime: Date.now(),
-        // latestBlock: latest
+        network: NETWORK,
       },
-      currentBlockIndex: 0,
+      lastUpdatedBox: 0,
       boxState: [],
       config: {
         contractAddress: CONTRACT,
@@ -79,6 +88,7 @@ class KittyAppStateStore {
     }
     console.log('setting state to ', newState);
     this.state = newState;
+    this._invokeSubscribers();
   }
 
   getState() {
@@ -95,14 +105,6 @@ class KittyAppStateStore {
 
   handleEvent(ctx) {
 
-    if (! this.session) {
-      this.session = {
-        startingBlock: start,
-        startingTime: Date.now(),
-        latestBlock: latest
-      }
-    }
-
     const txn = ctx.transaction;
     if (! txn) {
       console.log("WARNING: NO TXN DETECTED", ctx);
@@ -112,7 +114,6 @@ class KittyAppStateStore {
     const {
       allEvents,
       // blockNumber,
-      transactionIndex,
       transactionHash
     } = txn;
 
@@ -125,7 +126,7 @@ class KittyAppStateStore {
     }
 
     // reset current transaction index for new block
-    if (this.state.blockchain.currentBlock != blockNumber) {
+    if (this.state.blockchain.currentBlock !== blockNumber) {
       this.state.blockchain.currentTransaction = 0;
     }
 
@@ -157,8 +158,8 @@ class KittyAppStateStore {
 
       const boxIndex = this._getBoxPosition(transactionHash);
       this.state.boxState[boxIndex] = boxState;
-      this.state.currentBlockIndex = boxIndex;
-
+      this.state.lastUpdatedBox = boxIndex;
+      this._invokeSubscribers();
     })
 
   };
