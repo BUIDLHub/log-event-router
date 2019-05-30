@@ -1,0 +1,11 @@
+.dashboard {
+  background: theme-color("bg-muted");
+
+  .toolbar {
+    background: theme-color("nav-bg");
+  }
+
+  .card {
+    box-shadow: 0px 1px 10px rgba(100,100,100,.25);
+  }
+}

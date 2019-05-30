@@ -58,7 +58,7 @@ export default class Results extends React.Component {
 
     return (
       <Row className={cn(align.topCenter, align.full, align.noMarginPad)}>
-        <Col md="10" className={cn(align.allCenter, align.noMarginPad)}>
+        <Col md="10" className={cn("mb-4", "border-bottom", "border-muted", align.allCenter, align.noMarginPad)}>
           <span className={cn("font-weight-light", "text-sz-lg")}>
             Recent Test Results
           </span>

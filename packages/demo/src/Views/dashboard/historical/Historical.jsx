@@ -209,13 +209,13 @@ export default class Historical extends React.Component {
 
     return (
       <Row className={cn(align.topCenter, align.full, align.noMarginPad)}>
-        <Col md="10" className={cn(align.topCenter, align.noMarginPad)}>
+        <Col md="10" className={cn("mb-4", "border-bottom", "border-muted", align.topCenter, align.noMarginPad)}>
           <span className={cn("font-weight-light", "text-sz-lg")}>
             Recent Tests
           </span>
         </Col>
 
-        <Col md="10" className={cn(align.allCenter, align.noMarginPad)}>
+        <Col md="10" className={cn("mb-2", align.allCenter, align.noMarginPad)}>
           <span className={cn("mr-1", "text-muted", "text-1", "font-weight-light")}>
            compare by:
           </span>

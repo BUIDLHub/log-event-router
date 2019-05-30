@@ -129,7 +129,7 @@ export default class Params extends React.Component {
 
     return (
       <Row className={cn(align.topCenter, align.full, align.noMarginPad)}>
-        <Col md="10" className={cn(align.allCenter, "mb-4", align.noMarginPad)}>
+        <Col md="10" className={cn(align.allCenter, "border-bottom", "border-muted", "mb-4", align.noMarginPad)}>
           <span className={cn("font-weight-light", "text-sz-lg")}>
             Test Params
           </span>
