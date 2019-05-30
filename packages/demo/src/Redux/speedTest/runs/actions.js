@@ -2,10 +2,13 @@ import {createActions} from 'reduxsauce';
 
 const {Types, Creators} = createActions({
   initStart: null,
-  initSuccess: ['web3', 'latestBlock', 'network'],
-  changeNetwork: ['network'],
+  initSuccess: ['runs', 'recent'],
+  update: ['run'],
+  start: null,
+  stop: null,
   failure: ['error']
-}, {prefix: "chain."});
+}, {prefix: "speedTest.runs."});
+
 export {
   Types,
   Creators

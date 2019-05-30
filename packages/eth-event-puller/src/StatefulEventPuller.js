@@ -4,6 +4,8 @@ import _ from 'lodash';
 
 const log = new Log({component: "StatefulEventPuller"});
 
+const MIN_BLOCK_RANGE = 100;
+
 export default class StatefulEventPuller {
   constructor(props) {
     [
@@ -28,6 +30,11 @@ class Cursor {
     this.eventName = props.eventName;
     this.options = props.options;
     this.totalPages = 1;
+    this.meta = {
+      rpcCalls: 0,
+      fromBlock: 0,
+      toBlock: 0
+    };
 
     [
       'init',
@@ -50,13 +57,14 @@ class Cursor {
 
   async _pull(done, err, cb) {
     let span = this.toBlock - this.fromBlock;
+
     if(span < 0) {
       log.error("Invalid block range. Start is before end", this.fromBlock, this.toBlock);
       //return err(new Error("Start block is after end block"));
       return done(undefined);
     }
 
-    log.info("Querying for logs in range", this.fromBlock, "-", this.toBlock);
+    log.info("Querying", span, "blocks for logs in range", this.fromBlock, "-", this.toBlock);
     let config = {
       ...this.options,
       fromBlock: this.fromBlock,
@@ -68,6 +76,9 @@ class Cursor {
 
       let evtName = this.eventName || "allEvents";
       let start = Date.now();
+      this.meta.rpcCalls++;
+      this.meta.fromBlock = this.fromBlock;
+      this.meta.toBlock = this.toBlock;
       let events = await contract.getPastEvents(evtName, config);
 
       //always make sure events are sorted by block and txn index
@@ -88,11 +99,17 @@ class Cursor {
 
         let blocks = _.values(byBlock);
         log.debug("Sending", blocks.length, "blocks to callback");
-        //for each block
+        let meta = {
+          ...this.meta
+        };
         for(let i=0;i<blocks.length;++i) {
           let b = blocks[i];
           //send back all transaction bundles
-          await cb(null, b.transactions);
+
+          await cb(null, b.transactions, meta);
+        }
+        this.meta = {
+          rpcCalls: 0
         }
       } catch (e) {
         log.error("Problem in callback", e);
@@ -102,10 +119,14 @@ class Cursor {
       log.debug("Final end",this.finalEnd,"Current end",this.toBlock);
       if(this.finalEnd > this.toBlock) {
         let start = this.toBlock + 1;
+        if(this.increment < MIN_BLOCK_RANGE) {
+          this.increment = MIN_BLOCK_RANGE;
+        }
         let end = this.toBlock + 1 + this.increment;
+
         log.debug("Going to next segement", start, end);
         this.fromBlock = start;
-        this.toBlock = end;
+        this.toBlock = Math.min(end, this.finalEnd);
         done(this);
       } else {
         log.debug("Finished all segments");
@@ -118,20 +139,22 @@ class Cursor {
       //yes, hacky, but Infura docs specific have this as what to look
       //for to adjust block range
       if(e.message.includes("more than 1000 results")) {
-        log.info("Have to split query apart");
+
         if(span <= 1) {
           //we've already reduced it as much as we can reduce
           //the span so have to bail out.
           throw e;
         }
+
         //otherwise, cut the span in 1/2 and try again
-        let newSpan = Math.ceil(span/2);
+        let newSpan = Math.ceil(span/2)-0;
 
         //if wec can't split any lower than 1, we bail
         if(newSpan === 0) {
           throw e;
         }
 
+        log.info("Have to split query apart", span, newSpan);
         let totalSpan = this.finalBlock - this.fromBlock;
 
         this.increment = newSpan;

@@ -2,10 +2,11 @@ import {createActions} from 'reduxsauce';
 
 const {Types, Creators} = createActions({
   initStart: null,
-  initSuccess: ['web3', 'latestBlock', 'network'],
-  changeNetwork: ['network'],
+  initSuccess: ['contracts'],
+  select: ['id'],
+  add: ['contract'],
   failure: ['error']
-}, {prefix: "chain."});
+}, {prefix: "contract."});
 export {
   Types,
   Creators

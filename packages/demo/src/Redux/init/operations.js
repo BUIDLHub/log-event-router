@@ -1,26 +1,21 @@
 import {Creators} from './actions';
-import {default as streamOps} from 'Redux/stream/operations';
 import {default as chainOps} from 'Redux/chain/operations';
-import {default as eventOps} from 'Redux/events/operations';
-
-const initStreams = props => {
-  return props.dispatch(streamOps.init())
-        .then(()=>props)
-}
+import {default as conOps} from 'Redux/contract/operations';
+import {default as runOps} from 'Redux/speedTest/runs/operations';
 
 const initChain = props => {
   return props.dispatch(chainOps.init())
         .then(()=>props);
 }
 
-const initEvents = props => {
-  return props.dispatch(eventOps.init())
+const initContracts = props => {
+  return props.dispatch(conOps.init())
         .then(()=>props);
 }
 
-const startStream = props => {
-  return props.dispatch(streamOps.start())
-          .then(()=>props);
+const initRuns = props => {
+  return props.dispatch(runOps.init())
+        .then(()=>props);
 }
 
 const start = () => (dispatch,getState) => {
@@ -39,9 +34,8 @@ const _doStart = () => (dispatch,getState) => {
     getState
   }
   initChain(props)
-  .then(initStreams)
-  .then(initEvents)
-  .then(startStream)
+  .then(initContracts)
+  .then(initRuns)
   .then(()=>{
     dispatch(Creators.initSuccess());
   });

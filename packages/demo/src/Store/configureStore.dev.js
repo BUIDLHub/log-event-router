@@ -3,7 +3,7 @@ import thunk from 'redux-thunk'
 import { createLogger } from 'redux-logger'
 
 import rootReducer from 'Redux/reducers'
-//import DepMiddleware from 'Redux/DepMiddleware';
+import DepMiddleware from 'Redux/DepMiddleware';
 
 const configureStore = preloadedState => {
   const store = createStore(
@@ -11,7 +11,7 @@ const configureStore = preloadedState => {
     preloadedState,
       applyMiddleware(
         thunk,
-        //DepMiddleware(),
+        DepMiddleware(),
         createLogger())
   )
 

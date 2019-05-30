@@ -4,6 +4,9 @@ import {default as init} from './init/reducers';
 import {default as stream} from './stream/reducers';
 import {default as chain} from './chain/reducers';
 import {default as events} from './events/reducers';
+import {default as contract} from './contract/reducers';
+import {default as speedTest} from './speedTest/reducers';
+import {default as modals} from './modals/reducers';
 
 /**
  * Collection of all dashboard state tree reducers
@@ -13,5 +16,8 @@ export default combineReducers({
   init,
   stream,
   chain,
-  events
+  events,
+  contract,
+  speedTest,
+  modals
 });

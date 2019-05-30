@@ -28,6 +28,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var log = new _streamLogger2.default({ component: "StatefulEventPuller" });
 
+var MIN_BLOCK_RANGE = 100;
+
 var StatefulEventPuller = function () {
   function StatefulEventPuller(props) {
     var _this = this;
@@ -66,6 +68,11 @@ var Cursor = function () {
     this.eventName = props.eventName;
     this.options = props.options;
     this.totalPages = 1;
+    this.meta = {
+      rpcCalls: 0,
+      fromBlock: 0,
+      toBlock: 0
+    };
 
     ['init', 'nextBatch', '_pull'].forEach(function (fn) {
       return _this2[fn] = _this2[fn].bind(_this2);
@@ -132,7 +139,7 @@ var Cursor = function () {
     key: '_pull',
     value: function () {
       var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(done, err, cb) {
-        var span, config, contract, evtName, start, events, byBlock, blocks, i, b, _start, end, newSpan, totalSpan;
+        var span, config, contract, evtName, start, events, byBlock, blocks, meta, i, b, _start, end, newSpan, totalSpan;
 
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
@@ -151,7 +158,7 @@ var Cursor = function () {
 
               case 4:
 
-                log.info("Querying for logs in range", this.fromBlock, "-", this.toBlock);
+                log.info("Querying", span, "blocks for logs in range", this.fromBlock, "-", this.toBlock);
                 config = _extends({}, this.options, {
                   fromBlock: this.fromBlock,
                   toBlock: this.toBlock
@@ -160,10 +167,14 @@ var Cursor = function () {
                 contract = this.contract;
                 evtName = this.eventName || "allEvents";
                 start = Date.now();
-                _context3.next = 12;
+
+                this.meta.rpcCalls++;
+                this.meta.fromBlock = this.fromBlock;
+                this.meta.toBlock = this.toBlock;
+                _context3.next = 15;
                 return contract.getPastEvents(evtName, config);
 
-              case 12:
+              case 15:
                 events = _context3.sent;
 
 
@@ -182,92 +193,101 @@ var Cursor = function () {
 
                 log.info("Retrieved", events.length, "events in", Date.now() - start, "ms");
 
-                _context3.prev = 16;
+                _context3.prev = 19;
                 blocks = _lodash2.default.values(byBlock);
 
                 log.debug("Sending", blocks.length, "blocks to callback");
-                //for each block
+                meta = _extends({}, this.meta);
                 i = 0;
 
-              case 20:
+              case 24:
                 if (!(i < blocks.length)) {
-                  _context3.next = 27;
+                  _context3.next = 31;
                   break;
                 }
 
                 b = blocks[i];
                 //send back all transaction bundles
 
-                _context3.next = 24;
-                return cb(null, b.transactions);
+                _context3.next = 28;
+                return cb(null, b.transactions, meta);
 
-              case 24:
+              case 28:
                 ++i;
-                _context3.next = 20;
+                _context3.next = 24;
                 break;
 
-              case 27:
-                _context3.next = 32;
+              case 31:
+                this.meta = {
+                  rpcCalls: 0
+                };
+                _context3.next = 37;
                 break;
 
-              case 29:
-                _context3.prev = 29;
-                _context3.t0 = _context3['catch'](16);
+              case 34:
+                _context3.prev = 34;
+                _context3.t0 = _context3['catch'](19);
 
                 log.error("Problem in callback", _context3.t0);
 
-              case 32:
+              case 37:
 
                 //if there is more in the entire block range
                 log.debug("Final end", this.finalEnd, "Current end", this.toBlock);
                 if (this.finalEnd > this.toBlock) {
                   _start = this.toBlock + 1;
+
+                  if (this.increment < MIN_BLOCK_RANGE) {
+                    this.increment = MIN_BLOCK_RANGE;
+                  }
                   end = this.toBlock + 1 + this.increment;
+
 
                   log.debug("Going to next segement", _start, end);
                   this.fromBlock = _start;
-                  this.toBlock = end;
+                  this.toBlock = Math.min(end, this.finalEnd);
                   done(this);
                 } else {
                   log.debug("Finished all segments");
                   //otherwise scan is complete
                   done(undefined);
                 }
-                _context3.next = 54;
+                _context3.next = 59;
                 break;
 
-              case 36:
-                _context3.prev = 36;
+              case 41:
+                _context3.prev = 41;
                 _context3.t1 = _context3['catch'](6);
 
                 if (!_context3.t1.message.includes("more than 1000 results")) {
-                  _context3.next = 52;
+                  _context3.next = 57;
                   break;
                 }
 
-                log.info("Have to split query apart");
-
                 if (!(span <= 1)) {
-                  _context3.next = 42;
+                  _context3.next = 46;
                   break;
                 }
 
                 throw _context3.t1;
 
-              case 42:
+              case 46:
+
                 //otherwise, cut the span in 1/2 and try again
-                newSpan = Math.ceil(span / 2);
+                newSpan = Math.ceil(span / 2) - 0;
 
                 //if wec can't split any lower than 1, we bail
 
                 if (!(newSpan === 0)) {
-                  _context3.next = 45;
+                  _context3.next = 49;
                   break;
                 }
 
                 throw _context3.t1;
 
-              case 45:
+              case 49:
+
+                log.info("Have to split query apart", span, newSpan);
                 totalSpan = this.finalBlock - this.fromBlock;
 
 
@@ -275,19 +295,19 @@ var Cursor = function () {
                 this.totalPages = Math.ceil(totalSpan / this.increment);
                 this.toBlock = newSpan + this.fromBlock;
                 this._pull(done, err, cb);
-                _context3.next = 54;
+                _context3.next = 59;
                 break;
 
-              case 52:
+              case 57:
                 log.error("Problem pulling events", _context3.t1);
                 err(_context3.t1);
 
-              case 54:
+              case 59:
               case 'end':
                 return _context3.stop();
             }
           }
-        }, _callee3, this, [[6, 36], [16, 29]]);
+        }, _callee3, this, [[6, 41], [19, 34]]);
       }));
 
       function _pull(_x3, _x4, _x5) {
