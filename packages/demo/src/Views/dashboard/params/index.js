@@ -5,7 +5,7 @@ import {default as paramOps} from 'Redux/speedTest/params/operations';
 import {default as runOps} from 'Redux/speedTest/runs/operations';
 import {default as modalOps} from 'Redux/modals/operations';
 
-const MAX_BLOCKS = 50000;
+const MAX_BLOCKS = 300000;
 const APP_MODAL_ID = "addApp";
 
 const s2p = state => {

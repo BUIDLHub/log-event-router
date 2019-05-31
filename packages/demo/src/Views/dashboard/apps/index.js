@@ -3,8 +3,6 @@ import Modal from './AppModal';
 import {default as modalOps} from 'Redux/modals/operations';
 import {default as abiOps} from 'Redux/abi/operations';
 import {default as conOps} from 'Redux/contract/operations';
-import _ from 'lodash';
-
 
 const ID = "addApp";
 

@@ -58,6 +58,11 @@ export const removeSchema = yup.object().shape({
   key: yup.string().required("Need key to remove data from database")
 });
 
+export const removeByQuerySchema = yup.object().shape({
+  database: dbBaseSchema,
+  selector: yup.object().required("Must have a selector for removal")
+});
+
 export const updateSchema = yup.object().shape({
   database: dbBaseSchema,
   key: yup.string().required("Missing database key"),

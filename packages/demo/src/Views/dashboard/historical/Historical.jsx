@@ -210,9 +210,23 @@ export default class Historical extends React.Component {
     return (
       <Row className={cn(align.topCenter, align.full, align.noMarginPad)}>
         <Col md="10" className={cn("mb-4", "border-bottom", "border-muted", align.topCenter, align.noMarginPad)}>
-          <span className={cn("font-weight-light", "text-sz-lg")}>
-            Recent Tests
-          </span>
+          <div className={cn(align.full, align.allCenter, align.noMarginPad)}>
+            <Col md="4" className={cn(align.noMarginPad)}>&nbsp;</Col>
+            <Col md="4" className={cn(align.allCenter, align.noMarginPad)}>
+              <span className={cn("font-weight-light", "text-sz-lg")}>
+                Recent Tests
+              </span>
+            </Col>
+            <Col md="4" className={cn("text-right", align.rightCenter, align.noMarginPad)}>
+              <i className={cn("fa", "fa-trash", "clickable-icon")}
+                 onClick={()=>{
+                   if(window.confirm("Remove selected application's test runs?")) {
+                     this.props.clearRuns();
+                   }
+                 }}/>
+            </Col>
+          </div>
+
         </Col>
 
         <Col md="10" className={cn("mb-2", align.allCenter, align.noMarginPad)}>

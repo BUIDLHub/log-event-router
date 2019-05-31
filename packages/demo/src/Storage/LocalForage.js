@@ -8,6 +8,7 @@ import BaseDB, {
   findSchema,
   updateSchema,
   removeSchema,
+  removeByQuerySchema,
   iterateSchema
 } from './BaseDB';
 import _ from 'lodash';
@@ -74,6 +75,7 @@ export default class LocalForage extends BaseDB {
       'find',
       'update',
       'remove',
+      'removeByQuery',
       'clearAll',
       'iterate'
     ].forEach(fn=>{
@@ -233,5 +235,28 @@ export default class LocalForage extends BaseDB {
 
   async remove(props) {
     removeSchema.validateSync(props);
+  }
+
+  async removeByQuery(props)  {
+    removeByQuerySchema.validateSync(props);
+    let db = await this._getDB(props, dbFactory);
+    let selKeys = _.keys(props.selector);
+    let removals = [];
+    await db.iterate((dbVal, dbKey, itNum)=>{
+      selKeys.forEach(k=>{
+        let tgt = props.selector[k];
+        let v = dbVal[k];
+        if(!isNaN(tgt) && !isNaN(v)) {
+          tgt -= 0;
+          v -= 0;
+        }
+        if(tgt === v) {
+          removals.push(dbKey);
+        }
+      });
+    });
+    for(let i=0;i<removals.length;++i) {
+      await db.removeItem(removals[i]);
+    }
   }
 }

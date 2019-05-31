@@ -11,7 +11,7 @@ const init = () => async (dispatch, getState) => {
 
   if (ethProvider.isDapper) {
     console.error("Sorry, Dapper is not supported...");
-    ethProvider = null;
+    //ethProvider = null;
   }
 
   let web3 = null;
@@ -25,12 +25,16 @@ const init = () => async (dispatch, getState) => {
       //user denied access to app
       web3 = null;
     }
+
     latestBlock = await web3.eth.getBlockNumber();
     network = await web3.eth.net.getNetworkType();
+    if(typeof ethProvider.on === 'function') {
+      ethProvider.on("networkChanged", id=>{
+        dispatch(Creators.networkChanged(id));
+      });
+    }
 
-    ethProvider.on("networkChanged", id=>{
-      dispatch(Creators.networkChanged(id));
-    });
+
   }
   dispatch(Creators.initSuccess(web3, latestBlock, network));
 }

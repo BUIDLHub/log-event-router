@@ -2,6 +2,7 @@ import {connect} from 'react-redux';
 import View from './Historical';
 import _ from 'lodash';
 import {formatTimeLong} from 'Utils/time';
+import {default as runOps} from 'Redux/speedTest/runs/operations';
 
 const s2p = state => {
   let runs = state.speedTest.runs.byId;
@@ -53,7 +54,7 @@ const s2p = state => {
 
 const d2p = dispatch => {
   return {
-
+    clearRuns: () => dispatch(runOps.clearRuns())
   }
 }
 

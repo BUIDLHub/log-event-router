@@ -1,5 +1,6 @@
 import {createReducer} from 'reduxsauce';
 import {Types} from './actions';
+import _ from 'lodash';
 
 const INIT = {
   loading: false,
@@ -62,13 +63,30 @@ const update = (state=INIT, action) => {
   }
 }
 
+const clear = (state=INIT, action) => {
+  let id = action.id;
+  let byId = {
+    ...state.byId
+  }
+  _.keys(byId).forEach(appAndId=>{
+    if(appAndId.startsWith(id)) {
+      delete byId[appAndId];
+    }
+  })
+  return {
+    ...state,
+    byId
+  }
+}
+
 const HANDLERS = {
   [Types.INIT_START]: init,
   [Types.INIT_SUCCESS]: initSuccess,
   [Types.FAILURE]: fail,
   [Types.START]: start,
   [Types.STOP]: stop,
-  [Types.UPDATE]: update
+  [Types.UPDATE]: update,
+  [Types.CLEAR_RUNS]: clear
 }
 
 export default createReducer(INIT, HANDLERS);

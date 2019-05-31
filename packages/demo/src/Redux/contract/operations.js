@@ -18,7 +18,7 @@ const init = () => async (dispatch,getState) => {
     let data = getState().speedTest.params.data;
     let con = data["contract"];
     console.log("Contract param", con);
-    
+
     let selCon = getState().contract.selected;
     if(!selCon || selCon.id !== con) {
       dispatch(Creators.select(con));
@@ -87,6 +87,12 @@ const addApp = app => async (dispatch, getState) => {
     key: ""+con.id,
     data: con
   });
+  if(typeof con.abi === 'string') {
+    con.abi = JSON.parse(con.abi);
+  }
+  if(!Array.isArray(con.abi)) {
+    throw new Error("ABI must be an array of contract function/event definitions");
+  }
   dispatch(Creators.add(con));
   dispatch(Creators.select(con.id));
 }

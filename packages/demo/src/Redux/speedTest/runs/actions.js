@@ -6,6 +6,7 @@ const {Types, Creators} = createActions({
   update: ['run'],
   start: null,
   stop: null,
+  clearRuns: ['id'],
   failure: ['error']
 }, {prefix: "speedTest.runs."});
 

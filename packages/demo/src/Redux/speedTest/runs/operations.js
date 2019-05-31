@@ -48,7 +48,7 @@ class SyncWrapper {
           newSummary.endBlockTime = this.runner.endBlock.timestamp;
 
           newSummary.txnCount += txns.length;
-          if(meta && newSummary.lastBlock != meta.toBlock) {
+          if(meta && newSummary.lastBlock !== meta.toBlock) {
             let delta = meta.toBlock - newSummary.lastBlock;
             newSummary.blockCount += delta;
             newSummary.lastBlock = meta.toBlock;
@@ -56,13 +56,13 @@ class SyncWrapper {
           if(meta) {
             newSummary.rpcCalls += meta.rpcCalls;
           }
-          newSummary.totalSize += JSON.stringify(txns).length;
           txns.forEach(t=>{
             if(!meta && newSummary.lastBlock !== t.blockNumber) {
               let delta = t.blockNumber - newSummary.lastBlock;
               newSummary.blockCount += delta;
               newSummary.lastBlock = t.blockNumber;
             }
+            newSummary.totalSize += JSON.stringify(t.allEvents).length;
             newSummary.eventCount += t.allEvents.length;
           });
           let newRun = {
@@ -195,9 +195,22 @@ const update = (run) => async dispatch => {
   return dispatch(Creators.update(run));
 }
 
+const clearRuns = () => async (dispatch, getState) => {
+  let state = getState();
+  let con = state.contract.selected;
+  await Storage.instance.removeByQuery({
+    database: dbNames.Runs,
+    selector: {
+      contract: con.id
+    }
+  });
+  dispatch(Creators.clearRuns(con.id));
+}
+
 export default {
   init,
   start,
   stop,
-  update
+  update,
+  clearRuns
 }
