@@ -6,8 +6,14 @@ const init = () => async (dispatch, getState) => {
   dispatch(Creators.initStart());
   let ethProvider = window.ethereum;
   if(!ethProvider && window.web3){
-    ethProvider =  window.web.currentProvider;
+    ethProvider =  window.web3.currentProvider;
   }
+
+  if (ethProvider.isDapper) {
+    console.error("Sorry, Dapper is not supported...");
+    ethProvider = null;
+  }
+
   let web3 = null;
   let latestBlock = 0;
   let network = null;
